@@ -3,28 +3,36 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// 🚀 YOUR OFFICIAL FIREBASE CONFIG
+// 🚀 OFFICIAL FIREBASE CONFIG WITH PRODUCTION FALLBACKS
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBVj0qDTfUyTeYBS0oEX1B31Knm5sIO-Qs",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "agri-sense-pb.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "agri-sense-pb",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "agri-sense-pb.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "981404446811",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:981404446811:web:006d8123c6adca8fbf8f7e",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-111EYNGXGS"
 };
 
-const app = initializeApp(firebaseConfig);
+let app;
+try {
+  app = initializeApp(firebaseConfig);
+} catch (e) {
+  console.warn("Firebase initializeApp note:", e);
+}
+
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 // ⚠️ Analytics removed: getAnalytics() was the PRIMARY white-screen crash root cause.
-// It throws synchronously when measurementId is undefined, before React even mounts.
-// Exported as null for backward compatibility with any code that imports it.
 export const analytics = null;
 
-// 🔐 SET PERMANENT PERSISTENCE
-setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence Error:", err));
+// 🔐 SET PERMANENT PERSISTENCE SAFELY
+try {
+  setPersistence(auth, browserLocalPersistence).catch(err => console.warn("Persistence Error:", err));
+} catch (e) {
+  console.warn("setPersistence failed:", e);
+}
 
 export default app;

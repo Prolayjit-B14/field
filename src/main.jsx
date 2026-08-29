@@ -13,9 +13,9 @@ try {
     </StrictMode>
   );
   
-  // 🛡️ RECOVERY: Tell the index.html loader to hide once React starts working
+  // 🛡️ RECOVERY: Immediately hide the diagnostic loader
   if (window.hideAppLoader) {
-    setTimeout(() => window.hideAppLoader(), 500);
+    window.hideAppLoader();
   }
 } catch (err) {
   console.error("❌ [MAIN FATAL ERROR]:", err);

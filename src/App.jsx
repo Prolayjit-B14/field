@@ -279,6 +279,12 @@ const AppRoutes = () => {
   console.log("🚦 [AppRoutes]: Current State:", { user: user?.email, isDataLoading, path: location.pathname });
 
   useEffect(() => {
+    if (window.hideAppLoader) {
+      window.hideAppLoader();
+    }
+  }, []);
+
+  useEffect(() => {
     // ✋ LOADING GUARD: Wait for Cloud Sync to finish
     if (isDataLoading) return;
 

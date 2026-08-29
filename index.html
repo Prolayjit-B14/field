@@ -29,16 +29,31 @@
       window.global = window;
       window.process = { env: { DEBUG: undefined }, nextTick: (cb) => setTimeout(cb, 0) };
       
-      // 🕵️ EMERGENCY FAIL-SAFE: Show error if React doesn't mount in 8 seconds
+      let bootTimer = null;
+      window.hideAppLoader = () => {
+        if (bootTimer) {
+          clearTimeout(bootTimer);
+          bootTimer = null;
+        }
+        const loader = document.getElementById('app-diag-loader');
+        if (loader) {
+          loader.style.display = 'none';
+          if (loader.parentNode) loader.parentNode.removeChild(loader);
+        }
+      };
+
+      // 🕵️ EMERGENCY FAIL-SAFE: Show error if React doesn't mount
       window.addEventListener('load', () => {
-        setTimeout(() => {
+        bootTimer = setTimeout(() => {
           const root = document.getElementById('root');
-          if (root && root.innerHTML === "") {
-            document.getElementById('app-diag-spinner').style.display = 'none';
-            document.getElementById('app-diag-error').style.display = 'block';
+          if (root && (!root.innerHTML || root.innerHTML.trim() === "")) {
+            const spinner = document.getElementById('app-diag-spinner');
+            const error = document.getElementById('app-diag-error');
+            if (spinner) spinner.style.display = 'none';
+            if (error) error.style.display = 'block';
             console.error("🚨 [DIAGNOSTIC]: React mount timeout reached.");
           }
-        }, 8000);
+        }, 15000);
       });
     </script>
   </head>
@@ -55,13 +70,5 @@
     <div id="root"></div>
     
     <script type="module" src="/src/main.jsx"></script>
-    
-    <script>
-      // 🛡️ RECOVERY: Remove loader when first render finishes (handled in main.jsx)
-      window.hideAppLoader = () => {
-        const loader = document.getElementById('app-diag-loader');
-        if (loader) loader.style.display = 'none';
-      };
-    </script>
   </body>
 </html>
