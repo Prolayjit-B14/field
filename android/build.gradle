@@ -23,8 +23,10 @@ allprojects {
         mavenCentral()
     }
 
-    // Redirect build directory to avoid OneDrive/Windows file locks on Desktop
-    buildDir = "C:/Users/polu1/AppData/Local/Temp/AgriSenseBuild/${project.name}"
+    // Redirect build directory on local Windows environments to avoid OneDrive file locks
+    if (System.getProperty("os.name").toLowerCase().contains("windows") && System.getenv("CI") == null) {
+        buildDir = "${System.getProperty("java.io.tmpdir")}/AgriSenseBuild/${project.name}"
+    }
 }
 
 
