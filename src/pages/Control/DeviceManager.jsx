@@ -373,7 +373,6 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
   const nodes = [
     { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: '#8B5E3C' },
     { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudSun,  color: '#3B82F6' },
-    { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Waves,     color: '#06D6A0' },
     { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: '#7C3AED' },
   ];
 
@@ -536,12 +535,10 @@ const DeviceManager = () => {
 
   const soilOnline    = isNodeOnline('soil_node')    && nodePower?.soil !== false;
   const weatherOnline = isNodeOnline('weather_node') && nodePower?.weather !== false;
-  const waterOnline   = isNodeOnline('water_node')   && nodePower?.water !== false;
   const visionOnline  = isNodeOnline('vision_node')  && nodePower?.vision !== false;
 
   const sd = soilOnline    ? (sensorData?.soil    || {}) : {};
   const wd = weatherOnline ? (sensorData?.weather || {}) : {};
-  const id = waterOnline   ? (sensorData?.water   || {}) : {};
 
   // ── Helper for precision formatting ──────────────────────────────────────
   const f = (val) => (val != null && !isNaN(val) ? Number(val).toFixed(1) : '---');
@@ -560,12 +557,7 @@ const DeviceManager = () => {
     { label: 'Light', value: (wd && wd.lightIntensity != null) ? `${f(wd.lightIntensity)} lx` : '---', icon: Sun, iconColor: T.warning },
   ];
 
-  const irrigSensors = [
-    { label: 'Lvl', value: (id && id.level != null) ? `${f(id.level)}%` : '---', icon: Waves, iconColor: T.secondary },
-    { label: 'Flow', value: (id && id.flow != null) ? `${f(id.flow)} L/min` : '---', icon: Gauge, iconColor: T.secondary },
-  ];
-
-  const activeCount = [soilOnline, weatherOnline, waterOnline, visionOnline].filter(Boolean).length;
+  const activeCount = [soilOnline, weatherOnline, visionOnline].filter(Boolean).length;
 
   return (
     <motion.div 
@@ -588,7 +580,7 @@ const DeviceManager = () => {
       
       <NetworkHealthCard
         activeCount={activeCount}
-        totalCount={4}
+        totalCount={3}
         mqttStatus={mqttStatus}
       />
 
@@ -597,7 +589,6 @@ const DeviceManager = () => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginTop: '4px' }}>
         <NodeCard icon={Sprout} label="Soil Node" color="#8B5E3C" isOnline={soilOnline} sensors={soilSensors} />
         <NodeCard icon={CloudSun} label="Weather Node" color="#3B82F6" isOnline={weatherOnline} sensors={weatherSensors} />
-        <NodeCard icon={Waves} label="Irrigation Node" color="#06D6A0" isOnline={waterOnline} sensors={irrigSensors} />
         <VisionCard isOnline={visionOnline} detection={sensorData?.vision} />
       </div>
 

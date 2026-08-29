@@ -17,11 +17,10 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   const [devices, setDevices] = useState({
     'soil_node': processDeviceState('soil_node', 'soil', null),
     'weather_node': processDeviceState('weather_node', 'weather', null),
-    'water_node': processDeviceState('water_node', 'water', null),
     'vision_node': processDeviceState('vision_node', 'vision', null)
   });
   const [systemOverview, setSystemOverview] = useState({
-    total_nodes: 4, active_nodes: 0, partial_nodes: 0, offline_nodes: 4,
+    total_nodes: 3, active_nodes: 0, partial_nodes: 0, offline_nodes: 3,
     overall_status: 'OFFLINE', health_percent: 0, nodes: []
   });
   const [mqttStatus, setMqttStatus] = useState('disconnected');
@@ -70,12 +69,10 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
         // Even if the data isn't nested under "soil:", if it contains moisture, it's a soil node.
         const topicSoil = topicLower.includes('soil');
         const topicWeather = topicLower.includes('weather');
-        const topicWater = topicLower.includes('water') || topicLower.includes('irrigation');
         const topicVision = topicLower.includes('vision');
 
         if (topicSoil || data.soil || data.moisture || data.m || data.ph) checkAndSet('soil_node');
         if (topicWeather || data.weather || data.temp || data.humidity || data.ldr) checkAndSet('weather_node');
-        if (topicWater || data.water || data.irrigation || data.level || data.flow) checkAndSet('water_node');
         if (topicVision || data.vision || data.detection) checkAndSet('vision_node');
 
         setSystemOverview(calculateSystemOverview(nextDevs));
@@ -143,24 +140,19 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
       setSensorHistory(prev => [...prev, payload].slice(-2000));
       
       // ✅ FIX: Store telemetry in Firestore periodically for historical charts
-      // Save every 12th pulse (60 seconds) to avoid exceeding free-tier quotas
       tick++;
-      if (tick >= 12 && user?.email) {
-        tick = 0;
-        const telRef = collection(db, "farmers", user.email, "telemetry");
-        
-        // 🚀 CRITICAL: Sanitize payload to strip undefined fields which crash Firestore
-        const sanitizedPayload = JSON.parse(JSON.stringify(payload)); 
-        
-        addDoc(telRef, sanitizedPayload)
-          .then(() => console.log("🛰️ [DB_SYNC] Telemetry Snapshot Saved"))
-          .catch(err => console.error("❌ [DB_SYNC] Save Error:", err));
+      if (tick % 12 === 0 && user?.email) {
+        try {
+          const docRef = doc(db, "farmers", user.email, "telemetry", String(now));
+          setDoc(docRef, payload, { merge: true }).catch(() => {});
+        } catch (e) {}
       }
     }, 5000);
+
     return () => clearInterval(livePulse);
   }, [user?.email]);
 
-  // 🚀 INITIAL HYDRATION: Fetch latest state from Firestore on mount
+  // 🚀 PERFORMANCE: Hydrate Latest Sensor Telemetry from Cloud on Initial Mount
   useEffect(() => {
     if (!user?.email) return;
     
@@ -171,11 +163,16 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
         const snap = await getDocs(q);
         if (!snap.empty) {
           const latest = snap.docs[0].data();
-          delete latest.timestamp;
-          delete latest.node;
-          console.log("🛰️ [HYDRATION] Restored latest state from Firestore");
-          setSensorData(prev => ({ ...prev, ...latest }));
-          sensorDataRef.current = { ...sensorDataRef.current, ...latest };
+          setSensorData(prev => {
+            const hasLive = prev.soil?.moisture != null;
+            if (hasLive) return prev; // Live MQTT always takes precedence
+            return {
+              ...prev,
+              soil: latest.soil || prev.soil,
+              weather: latest.weather || prev.weather,
+              vision: latest.vision || prev.vision,
+            };
+          });
         }
       } catch (err) {
         console.warn("⚠️ [HYDRATION] Latest state fetch failed (likely missing index or empty coll)");
@@ -189,14 +186,12 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   const maskedSensorData = useMemo(() => {
     const isSoilDown    = nodePower?.soil    === false || devices.soil_node?.status    === 'OFFLINE';
     const isWeatherDown = nodePower?.weather === false || devices.weather_node?.status === 'OFFLINE';
-    const isWaterDown   = nodePower?.water   === false || devices.water_node?.status   === 'OFFLINE';
     const isVisionDown  = nodePower?.vision  === false || devices.vision_node?.status  === 'OFFLINE';
 
     return {
       ...sensorData,
       soil:    isSoilDown    ? {} : sensorData.soil,
       weather: isWeatherDown ? {} : sensorData.weather,
-      water:   isWaterDown   ? {} : sensorData.water,
       vision:  isVisionDown  ? {} : sensorData.vision,
     };
   }, [sensorData, nodePower, devices]);
@@ -207,7 +202,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
     const next = { ...devices };
     if (nodePower?.soil    === false) next.soil_node    = { ...next.soil_node,    status: 'OFFLINE' };
     if (nodePower?.weather === false) next.weather_node = { ...next.weather_node, status: 'OFFLINE' };
-    if (nodePower?.water   === false) next.water_node   = { ...next.water_node,   status: 'OFFLINE' };
     if (nodePower?.vision  === false) next.vision_node  = { ...next.vision_node,  status: 'OFFLINE' };
     return next;
   }, [devices, nodePower]);
@@ -233,8 +227,7 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
 
   const systemHealth = useMemo(() => ({
     soil: calculateNodeHealth('soil', maskedSensorData.soil),
-    weather: calculateNodeHealth('weather', maskedSensorData.weather),
-    water: calculateNodeHealth('irrigation', maskedSensorData.water)
+    weather: calculateNodeHealth('weather', maskedSensorData.weather)
   }), [maskedSensorData]);
 
   const farmHealthScore = useMemo(() => calculateOverallHealth(systemHealth, maskedDevices), [systemHealth, maskedDevices]);

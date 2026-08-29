@@ -26,7 +26,6 @@ const Sidebar = () => {
     { name: 'Dashboard',           path: '/dashboard',              icon: LayoutDashboard, color: 'var(--primary)' },
     { name: 'Soil Monitor',        path: '/soil-monitoring',        icon: Sprout,          color: 'var(--primary)' },
     { name: 'Weather Station',     path: '/weather',                icon: CloudSun,        color: 'var(--accent)' },
-    { name: 'Irrigation Control',  path: '/irrigation',             icon: Waves,           color: 'var(--secondary)' },
     { name: 'Soil Forensics',      path: '/precision-soil-testing', icon: FlaskConical,    color: 'var(--primary)' },
     { name: 'Farm Advisor',        path: '/crop-advisor',           icon: Sparkles,        color: 'var(--accent)' },
     { name: 'Analytics Hub',       path: '/analytics',              icon: PieChart,        color: 'var(--secondary)' },

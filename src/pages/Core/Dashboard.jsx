@@ -40,19 +40,18 @@ const itemFadeUp = {
  * HealthOverview: Cinematic Hero Card
  */
 const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
-  const activeNodesCount = ['soil_node', 'water_node', 'weather_node', 'vision_node']
+  const activeNodesCount = ['soil_node', 'weather_node', 'vision_node']
     .filter(id => devices?.[id]?.status === 'ACTIVE' || devices?.[id]?.status === 'PARTIAL').length;
     
   const isOffline = activeNodesCount === 0;
   const healthColor = isOffline ? 'var(--text-inactive)' : getHealthColor(score || 0);
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   
-  const totalNodesCount = 4;
+  const totalNodesCount = 3;
 
   const systems = [
     { label: 'Soil', icon: Sprout, color: 'var(--primary)', active: systemHealth?.soil != null },
     { label: 'Weather', icon: CloudSun, color: 'var(--accent)', active: systemHealth?.weather != null },
-    { label: 'Irrigation', icon: Waves, color: 'var(--secondary)', active: systemHealth?.water != null },
     { label: 'Vision', icon: Camera, color: 'var(--primary)', active: visionOnline },
   ];
 
@@ -134,7 +133,7 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
 
 const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClick, nodeType }) => {
   const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
-  const systemColor = !isConnected ? 'var(--text-inactive)' : ({ soil: 'var(--primary)', irrigation: 'var(--secondary)', water: 'var(--secondary)', weather: 'var(--accent)', vision: 'var(--primary)' }[nodeType] || color);
+  const systemColor = !isConnected ? 'var(--text-inactive)' : ({ soil: 'var(--primary)', weather: 'var(--accent)', vision: 'var(--primary)' }[nodeType] || color);
   const healthColor = !isConnected ? 'var(--border-main)' : (score >= 80 ? 'var(--primary)' : score >= 50 ? 'var(--accent)' : 'var(--danger)');
 
   return (
@@ -345,25 +344,13 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
       }
       list.push({
         text,
-        text,
         icon: diff > 0 ? ArrowUp : ArrowDown,
         color: diff > 0 ? 'var(--danger)' : 'var(--secondary)',
         bg: diff > 0 ? 'var(--danger-soft)' : 'var(--secondary-soft)'
       });
     }
 
-    // 3. Resource Management
-    const level = sensorData.water?.level;
-    if (level != null) {
-      list.push({
-        text: `Irrigation Tank: ${level.toFixed(0)}% Full`,
-        icon: Droplets,
-        color: 'var(--secondary)',
-        bg: 'var(--secondary-soft)'
-      });
-    }
-
-    // 4. Actionable Intelligence
+    // 3. Actionable Intelligence
     const isDry = currM != null && currM < 35;
     const isRaining = sensorData.weather?.rainLevel > 0;
     
@@ -387,7 +374,7 @@ const InsightsCard = React.memo(({ sensorData, sensorHistory, navigate }) => {
     list.push({ text: recText, icon: recIcon, color: recColor, bg: recBg });
 
     return list.slice(0, 4);
-  }, [sensorData, sensorHistory]);
+  }, [sensorData.soil, sensorData.weather, sensorHistory]);
 
   return (
     <motion.div
@@ -562,13 +549,6 @@ const Dashboard = () => {
           status={devices?.['soil_node']?.status || (sensorData?.soil?.moisture ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.soil}
           onClick={() => navigate('/soil-monitoring')}
-        />
-        <SensorCard
-          title="Irrigation Health" nodeType="irrigation"
-          icon={Waves} color="#06D6A0"
-          status={devices?.['water_node']?.status || (sensorData?.water?.level ? 'ACTIVE' : 'OFFLINE')}
-          score={systemHealth?.water}
-          onClick={() => navigate('/irrigation')}
         />
         <SensorCard
           title="Weather Health" nodeType="weather"

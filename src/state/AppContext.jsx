@@ -55,9 +55,9 @@ export const AppProvider = ({ children }) => {
   const [nodePower, setNodePower] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_node_power');
-      return saved ? JSON.parse(saved) : { soil: true, weather: true, water: true, vision: true };
+      return saved ? JSON.parse(saved) : { soil: true, weather: true, vision: true };
     } catch (e) {
-      return { soil: true, weather: true, water: true, vision: true };
+      return { soil: true, weather: true, vision: true };
     }
   });
 

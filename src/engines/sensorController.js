@@ -38,7 +38,6 @@ export const processMqttMessage = (topic, data, prev) => {
     ...prev,
     soil: { ...prev.soil, npk: { ...prev.soil.npk } },
     weather: { ...prev.weather },
-    water: { ...prev.water },
     vision: { ...prev.vision },
     hardware: prev.hardware ? { ...prev.hardware } : {}
   };
@@ -50,11 +49,10 @@ export const processMqttMessage = (topic, data, prev) => {
   if (topicLower.includes('sensors')) nodeType = 'sensors';
   else if (topicLower.includes('soil')) nodeType = 'soil';
   else if (topicLower.includes('weather')) nodeType = 'weather';
-  else if (topicLower.includes('water') || topicLower.includes('irrigation')) nodeType = 'water';
   else if (topicLower.includes('vision') || topicLower.includes('camera') || topicLower.includes('cam')) nodeType = 'vision';
 
   // 🛰️ UNIFIED DATA ACCEPTANCE (Accept any valid telemetry)
-  if (nodeType === 'sensors' || data.soil || data.weather || data.water || data.irrigation || data.vision) {
+  if (nodeType === 'sensors' || data.soil || data.weather || data.vision) {
     if (data.soil) {
       const sData = data.soil;
       newState.soil.moisture = getVal(sData, ['moisture', 'm', 'hum'], prev.soil.moisture);
@@ -78,14 +76,6 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
     }
 
-    const waterSource = data.water || data.irrigation;
-    if (waterSource) {
-      newState.water.level = getVal(waterSource, ['level', 'l', 'water_level'], prev.water.level);
-      newState.water.flow = getVal(waterSource, ['flow', 'f', 'water_flow'], prev.water.flow || 0);
-      newState.water.pumpActive = (waterSource.pumpActive === 1 || waterSource.pump === 1 || waterSource.pump === "active" || waterSource.pumpActive === true || waterSource.pump === "on");
-      newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
-    }
-
     if (data.vision) {
       const vData = data.vision;
       newState.vision.active = vData.active === true || vData.active === 1 || vData.status === "online";
@@ -101,8 +91,6 @@ export const processMqttMessage = (topic, data, prev) => {
         ...newState.hardware,
         ...data.hardware
       };
-      // Synchronize actuator statuses if present in hardware object
-      if (data.hardware.pump) newState.water.pumpActive = (data.hardware.pump === "active" || data.hardware.pump === "ACTIVE" || data.hardware.pump === true || data.hardware.pump === "on");
     }
   }
   // Discrete Node Topics Fallback
@@ -131,15 +119,6 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.weather.temp = getVal(data, [], prev.weather.temp);
     }
     newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
-  }
-  else if (nodeType === 'water' || nodeType === 'irrigation') {
-    if (typeof data === 'object') {
-      newState.water.level = getVal(data, ['level', 'l'], prev.water.level);
-      newState.water.flow = getVal(data, ['flow', 'f'], prev.water.flow);
-    } else {
-      newState.water.level = getVal(data, [], prev.water.level);
-    }
-    newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
   }
 
   return newState;

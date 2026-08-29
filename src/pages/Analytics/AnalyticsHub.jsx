@@ -24,7 +24,6 @@ const COLORS = {
   bg: 'var(--bg-main)', card: 'var(--bg-card)', border: 'var(--glass-stroke)', text: 'var(--text-main)', subtext: 'var(--text-muted)',
   soil: ['var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--danger)', 'var(--primary)', 'var(--secondary)', 'var(--accent)', 'var(--primary)'],
   weather: ['var(--secondary)', 'var(--accent)', 'var(--primary)', 'var(--secondary)', 'var(--danger)', 'var(--primary)', 'var(--accent)', 'var(--secondary)'],
-  water: ['var(--secondary)', 'var(--primary)', 'var(--primary)', 'var(--accent)'],
   vision: ['var(--accent)', 'var(--secondary)', 'var(--danger)', 'var(--primary)']
 };
 
@@ -294,12 +293,6 @@ const AnalyticsHub = () => {
             health: entry.weather?.healthIndex
           };
         }
-        if (type === 'water') {
-          return { ...base, 
-            level: entry.water?.level,
-            pump: entry.water?.pumpActive ? 1 : 0
-          };
-        }
         if (type === 'vision') {
           return { ...base, 
             active: entry.vision?.active ? 1 : 0,
@@ -397,7 +390,6 @@ const AnalyticsHub = () => {
     return {
       soil: mapData(filteredHistory, 'soil'),
       weather: mapData(filteredHistory, 'weather'),
-      water: mapData(filteredHistory, 'water'),
       vision: mapData(filteredHistory, 'vision')
     };
   }, [sensorHistory, timeRange.id, timeMetrics]);
@@ -408,7 +400,6 @@ const AnalyticsHub = () => {
     if (!deviceOffline) return false;
     if (type === 'soil') return !sensorData?.soil?.moisture && sensorHistory.length === 0;
     if (type === 'weather') return !sensorData?.weather?.temp && sensorHistory.length === 0;
-    if (type === 'water') return !sensorData?.water?.level && sensorHistory.length === 0;
     if (type === 'vision') return !sensorData?.vision?.active && sensorHistory.length === 0;
     return deviceOffline;
   };
@@ -513,10 +504,6 @@ const AnalyticsHub = () => {
         { title: "Humidity", type: "line", key: "humidity", color: COLORS.weather[1], unit: "%", min: 0, max: 100 },
         { title: "Light (LDR)", type: "line", key: "lightIntensity", color: COLORS.weather[2], unit: "LUX", min: 0, max: 8000 },
         { title: "Rain Level", type: "line", key: "rainLevel", color: COLORS.weather[3], unit: "mm", min: 0, max: 100 }
-      ],
-      water: [
-        { title: "Reservoir Level", type: "line", key: "level", color: COLORS.water[0], unit: "%", min: 0, max: 100 },
-        { title: "Hydraulic Flow", type: "line", key: "flow", color: COLORS.water[1], unit: "L/min", min: 0, max: 50 }
       ],
       vision: [
         { title: "Camera Activity", type: "line", key: "active", color: COLORS.vision[0], unit: "", min: 0, max: 2 }
@@ -669,7 +656,7 @@ const AnalyticsHub = () => {
           {[
             { id: 'soil', label: 'Soil', icon: Sprout, color: 'var(--primary)' },
             { id: 'weather', label: 'Weather', icon: CloudRain, color: 'var(--secondary)' },
-            { id: 'water', label: 'Irrigation', icon: Waves, color: 'var(--accent)' }
+            { id: 'vision', label: 'Vision', icon: Camera, color: 'var(--accent)' }
           ].map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
               padding: '8px 16px', borderRadius: '12px', border: 'none',

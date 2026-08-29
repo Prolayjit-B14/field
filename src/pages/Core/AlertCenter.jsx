@@ -144,11 +144,6 @@ const AlertCenter = () => {
       else if (sensorData.weather.temp < 5) addAlert('temp_low', 'Frost Risk Alert', `Temperature at ${sensorData.weather.temp}°C. Cell membrane damage possible.`, 'warning');
     }
 
-    // 3. Resource & Irrigation
-    if (sensorData.water?.tankLevel !== null && sensorData.water.tankLevel < 15) {
-      addAlert('tank_critical', 'Reservoir Exhausted', `Tank level at ${sensorData.water.tankLevel}%. System shutdown imminent.`, 'critical');
-    }
-
     // 4. Hardware Connectivity
     const offlineNodes = Object.entries(devices || {}).filter(([k, d]) => d?.status === 'OFFLINE');
     if (offlineNodes.length > 0) {

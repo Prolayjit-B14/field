@@ -44,15 +44,15 @@ const getParamScore = (val, min, max, buffer = 10) => {
 
 export const getAIv2Recommendations = (data) => {
   const recs = [];
-  const { soil, weather, water } = data;
+  const { soil, weather } = data;
 
   // Soil Intelligence
   if (soil.moisture < 30) {
     recs.push({
-      id: 'irr_01', category: 'Irrigation', priority: 'High',
+      id: 'irr_01', category: 'Soil', priority: 'High',
       title: 'Moisture Deficiency',
       message: `Soil moisture at ${soil.moisture}% is below critical threshold. Active root stress detected.`,
-      action: 'Activate Pump'
+      action: 'Water Crop'
     });
   }
 
@@ -172,29 +172,6 @@ export const calculateNodeHealth = (nodeType, data) => {
       if (hScore !== null) { scores.push(hScore); weights.push(0.20); }
       if (lScore !== null) { scores.push(lScore); weights.push(0.20); }
       if (rScore !== null) { scores.push(rScore); weights.push(0.30); }
-      break;
-    }
-    case 'storage': {
-      const st = data;
-      const tScore = getParamScore(st.temp, 4, 25, 10); // General storage temp
-      const hScore = getParamScore(st.humidity, 60, 90, 15); // General storage humidity
-      const gScore = getParamScore(st.mq135, 0, 400, 200); // Standard air quality
-
-      if (tScore !== null) { scores.push(tScore); weights.push(0.40); }
-      if (hScore !== null) { scores.push(hScore); weights.push(0.30); }
-      if (gScore !== null) { scores.push(gScore); weights.push(0.30); }
-      break;
-    }
-    case 'irrigation':
-    case 'water': {
-      const ir = data;
-      const lScore = getParamScore(ir.level, 20, 100, 60); // Broader level range
-      if (lScore === null) break; // If primary telemetry is missing, don't score
-
-      const pScore = ir.pumpActive ? 100 : 90; 
-
-      scores.push(lScore); weights.push(0.70);
-      scores.push(pScore); weights.push(0.30);
       break;
     }
     default: return null;

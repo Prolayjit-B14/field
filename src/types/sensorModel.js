@@ -20,12 +20,6 @@ export const INITIAL_SENSOR_DATA = {
     lightIntensity: null, 
     rainLevel: null 
   },
-  water: { 
-    level: null, 
-    flow: null,
-    pumpActive: false, 
-    healthIndex: null
-  },
   vision: {
     active: false, 
     type: '---', 
@@ -54,7 +48,6 @@ export const INITIAL_API_WEATHER = {
 
 export const INITIAL_SYSTEM_HEALTH = { 
   soil: null, 
-  water: null, 
   weather: null, 
   vision: null
 };
