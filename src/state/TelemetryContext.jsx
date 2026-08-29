@@ -17,12 +17,11 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   const [devices, setDevices] = useState({
     'soil_node': processDeviceState('soil_node', 'soil', null),
     'weather_node': processDeviceState('weather_node', 'weather', null),
-    'storage_node': processDeviceState('storage_node', 'storage', null),
     'water_node': processDeviceState('water_node', 'water', null),
     'vision_node': processDeviceState('vision_node', 'vision', null)
   });
   const [systemOverview, setSystemOverview] = useState({
-    total_nodes: 5, active_nodes: 0, partial_nodes: 0, offline_nodes: 5,
+    total_nodes: 4, active_nodes: 0, partial_nodes: 0, offline_nodes: 4,
     overall_status: 'OFFLINE', health_percent: 0, nodes: []
   });
   const [mqttStatus, setMqttStatus] = useState('disconnected');
@@ -71,13 +70,11 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
         // Even if the data isn't nested under "soil:", if it contains moisture, it's a soil node.
         const topicSoil = topicLower.includes('soil');
         const topicWeather = topicLower.includes('weather');
-        const topicStorage = topicLower.includes('storage');
         const topicWater = topicLower.includes('water') || topicLower.includes('irrigation');
         const topicVision = topicLower.includes('vision');
 
         if (topicSoil || data.soil || data.moisture || data.m || data.ph) checkAndSet('soil_node');
         if (topicWeather || data.weather || data.temp || data.humidity || data.ldr) checkAndSet('weather_node');
-        if (topicStorage || data.storage || data.mq135) checkAndSet('storage_node');
         if (topicWater || data.water || data.irrigation || data.level || data.flow) checkAndSet('water_node');
         if (topicVision || data.vision || data.detection) checkAndSet('vision_node');
 
@@ -193,7 +190,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
     const isSoilDown    = nodePower?.soil    === false || devices.soil_node?.status    === 'OFFLINE';
     const isWeatherDown = nodePower?.weather === false || devices.weather_node?.status === 'OFFLINE';
     const isWaterDown   = nodePower?.water   === false || devices.water_node?.status   === 'OFFLINE';
-    const isStorageDown = nodePower?.storage === false || devices.storage_node?.status === 'OFFLINE';
     const isVisionDown  = nodePower?.vision  === false || devices.vision_node?.status  === 'OFFLINE';
 
     return {
@@ -201,7 +197,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
       soil:    isSoilDown    ? {} : sensorData.soil,
       weather: isWeatherDown ? {} : sensorData.weather,
       water:   isWaterDown   ? {} : sensorData.water,
-      storage: isStorageDown ? {} : sensorData.storage,
       vision:  isVisionDown  ? {} : sensorData.vision,
     };
   }, [sensorData, nodePower, devices]);
@@ -213,7 +208,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
     if (nodePower?.soil    === false) next.soil_node    = { ...next.soil_node,    status: 'OFFLINE' };
     if (nodePower?.weather === false) next.weather_node = { ...next.weather_node, status: 'OFFLINE' };
     if (nodePower?.water   === false) next.water_node   = { ...next.water_node,   status: 'OFFLINE' };
-    if (nodePower?.storage === false) next.storage_node = { ...next.storage_node, status: 'OFFLINE' };
     if (nodePower?.vision  === false) next.vision_node  = { ...next.vision_node,  status: 'OFFLINE' };
     return next;
   }, [devices, nodePower]);
@@ -240,7 +234,6 @@ export const TelemetryProvider = ({ children, user, farmInfo, nodePower }) => {
   const systemHealth = useMemo(() => ({
     soil: calculateNodeHealth('soil', maskedSensorData.soil),
     weather: calculateNodeHealth('weather', maskedSensorData.weather),
-    storage: calculateNodeHealth('storage', maskedSensorData.storage),
     water: calculateNodeHealth('irrigation', maskedSensorData.water)
   }), [maskedSensorData]);
 

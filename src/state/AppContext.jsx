@@ -55,9 +55,9 @@ export const AppProvider = ({ children }) => {
   const [nodePower, setNodePower] = useState(() => {
     try {
       const saved = localStorage.getItem('agrisense_node_power');
-      return saved ? JSON.parse(saved) : { soil: true, weather: true, water: true, storage: true, vision: true };
+      return saved ? JSON.parse(saved) : { soil: true, weather: true, water: true, vision: true };
     } catch (e) {
-      return { soil: true, weather: true, water: true, storage: true, vision: true };
+      return { soil: true, weather: true, water: true, vision: true };
     }
   });
 
@@ -84,7 +84,7 @@ export const AppProvider = ({ children }) => {
   const [profileMeta, setProfileMeta] = useState({
     role: 'Industrial Controller',
     accessLevel: 'Admin (L5)',
-    nodesManaged: 5,
+    nodesManaged: 4,
     lastLogin: 'Today',
     commandsIssued: 0,
     alertsResolved: 0,

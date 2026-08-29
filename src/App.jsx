@@ -34,7 +34,6 @@ const Dashboard = React.lazy(() => import('./pages/Core/Dashboard'));
 const AlertCenter = React.lazy(() => import('./pages/Core/AlertCenter'));
 const SoilMonitor = React.lazy(() => import('./pages/Monitoring/SoilMonitor'));
 const WeatherMonitor = React.lazy(() => import('./pages/Monitoring/WeatherMonitor'));
-const StorageMonitor = React.lazy(() => import('./pages/Monitoring/StorageMonitor'));
 const VisualMonitor = React.lazy(() => import('./pages/Monitoring/VisualMonitor'));
 const IrrigationSystem = React.lazy(() => import('./pages/Control/IrrigationSystem'));
 const DeviceManager = React.lazy(() => import('./pages/Control/DeviceManager'));
@@ -163,7 +162,6 @@ const MainLayout = ({ children }) => {
     '/soil-monitoring':        'Soil Monitor',
     '/irrigation':             'Irrigation Control',
     '/weather':                'Weather Station',
-    '/storage-hub':            'Storage Area',
     '/camera':                 'Camera View',
     '/device-area':            'Device Management',
     '/precision-soil-testing': 'Soil Test',
@@ -191,7 +189,6 @@ const MainLayout = ({ children }) => {
       '/soil-monitoring', 
       '/irrigation', 
       '/weather', 
-      '/storage-hub', 
       '/camera', 
       '/alerts', 
       '/reports', 
@@ -381,7 +378,6 @@ const AppRoutes = () => {
         <Route path="/analytics" element={<AnalyticsHub />} />
         <Route path="/soil-monitoring" element={<SoilMonitor />} />
         <Route path="/irrigation" element={<IrrigationSystem />} />
-        <Route path="/storage-hub" element={<StorageMonitor />} />
         <Route path="/camera" element={<VisualMonitor />} />
         <Route path="/device-area" element={<DeviceManager />} />
         <Route path="/alerts" element={<AlertCenter />} />

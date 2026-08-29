@@ -374,7 +374,6 @@ const NodePowerPanel = ({ nodePower, toggleNodePower, devices }) => {
     { id: 'soil',    nodeId: 'soil_node',    label: 'Soil',    icon: Sprout,    color: '#8B5E3C' },
     { id: 'weather', nodeId: 'weather_node', label: 'Weather', icon: CloudSun,  color: '#3B82F6' },
     { id: 'water',   nodeId: 'water_node',   label: 'Irrig',   icon: Waves,     color: '#06D6A0' },
-    { id: 'storage', nodeId: 'storage_node', label: 'Storage', icon: Database,  color: '#64748B' },
     { id: 'vision',  nodeId: 'vision_node',  label: 'Vision',  icon: Camera,    color: '#7C3AED' },
   ];
 
@@ -538,13 +537,11 @@ const DeviceManager = () => {
   const soilOnline    = isNodeOnline('soil_node')    && nodePower?.soil !== false;
   const weatherOnline = isNodeOnline('weather_node') && nodePower?.weather !== false;
   const waterOnline   = isNodeOnline('water_node')   && nodePower?.water !== false;
-  const storageOnline = isNodeOnline('storage_node') && nodePower?.storage !== false;
   const visionOnline  = isNodeOnline('vision_node')  && nodePower?.vision !== false;
 
   const sd = soilOnline    ? (sensorData?.soil    || {}) : {};
   const wd = weatherOnline ? (sensorData?.weather || {}) : {};
   const id = waterOnline   ? (sensorData?.water   || {}) : {};
-  const st = storageOnline ? (sensorData?.storage || {}) : {};
 
   // ── Helper for precision formatting ──────────────────────────────────────
   const f = (val) => (val != null && !isNaN(val) ? Number(val).toFixed(1) : '---');
@@ -568,13 +565,7 @@ const DeviceManager = () => {
     { label: 'Flow', value: (id && id.flow != null) ? `${f(id.flow)} L/min` : '---', icon: Gauge, iconColor: T.secondary },
   ];
 
-  const storageSensors = [
-    { label: 'Temp', value: (st && st.temp != null) ? `${f(st.temp)}°C` : '---', icon: Thermometer, iconColor: T.danger },
-    { label: 'Hum',  value: (st && st.humidity != null) ? `${f(st.humidity)}%` : '---', icon: Droplets, iconColor: T.secondary },
-    { label: 'Gas',  value: (st && st.mq135 != null) ? `${f(st.mq135)} ppm` : '---', icon: Flame, iconColor: T.warning },
-  ];
-
-  const activeCount = [soilOnline, weatherOnline, waterOnline, storageOnline, visionOnline].filter(Boolean).length;
+  const activeCount = [soilOnline, weatherOnline, waterOnline, visionOnline].filter(Boolean).length;
 
   return (
     <motion.div 
@@ -597,7 +588,7 @@ const DeviceManager = () => {
       
       <NetworkHealthCard
         activeCount={activeCount}
-        totalCount={5}
+        totalCount={4}
         mqttStatus={mqttStatus}
       />
 
@@ -607,7 +598,6 @@ const DeviceManager = () => {
         <NodeCard icon={Sprout} label="Soil Node" color="#8B5E3C" isOnline={soilOnline} sensors={soilSensors} />
         <NodeCard icon={CloudSun} label="Weather Node" color="#3B82F6" isOnline={weatherOnline} sensors={weatherSensors} />
         <NodeCard icon={Waves} label="Irrigation Node" color="#06D6A0" isOnline={waterOnline} sensors={irrigSensors} />
-        <NodeCard icon={Database} label="Storage Node" color="#64748B" isOnline={storageOnline} sensors={storageSensors} />
         <VisionCard isOnline={visionOnline} detection={sensorData?.vision} />
       </div>
 

@@ -144,13 +144,9 @@ const AlertCenter = () => {
       else if (sensorData.weather.temp < 5) addAlert('temp_low', 'Frost Risk Alert', `Temperature at ${sensorData.weather.temp}°C. Cell membrane damage possible.`, 'warning');
     }
 
-    // 3. Resource & Storage
+    // 3. Resource & Irrigation
     if (sensorData.water?.tankLevel !== null && sensorData.water.tankLevel < 15) {
       addAlert('tank_critical', 'Reservoir Exhausted', `Tank level at ${sensorData.water.tankLevel}%. System shutdown imminent.`, 'critical');
-    }
-    
-    if (sensorData.storage?.mq135 > 250) {
-      addAlert('gas_detected', 'Storage Gas Leak', `CO2/Smoke levels elevated in Storage Zone B. Check ventilation.`, 'critical');
     }
 
     // 4. Hardware Connectivity

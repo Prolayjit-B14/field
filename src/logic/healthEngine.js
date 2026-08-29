@@ -44,7 +44,7 @@ const getParamScore = (val, min, max, buffer = 10) => {
 
 export const getAIv2Recommendations = (data) => {
   const recs = [];
-  const { soil, weather, water, storage } = data;
+  const { soil, weather, water } = data;
 
   // Soil Intelligence
   if (soil.moisture < 30) {
@@ -90,16 +90,6 @@ export const getAIv2Recommendations = (data) => {
       title: 'Extreme Heat Stress',
       message: `Ambient temp ${weather.temp}°C. Evapotranspiration rates increased.`,
       action: 'Mist System'
-    });
-  }
-
-  // Storage Intelligence
-  if (storage.mq135 > 350) {
-    recs.push({
-      id: 'st_01', category: 'Storage', priority: 'High',
-      title: 'Ethylene Incursion',
-      message: `MQ135 gas levels at ${storage.mq135}ppm. Spoilage risk in Vault A.`,
-      action: 'Ventilate'
     });
   }
 

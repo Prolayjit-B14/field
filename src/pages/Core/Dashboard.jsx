@@ -40,20 +40,19 @@ const itemFadeUp = {
  * HealthOverview: Cinematic Hero Card
  */
 const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
-  const activeNodesCount = ['soil_node', 'water_node', 'weather_node', 'storage_node', 'vision_node']
+  const activeNodesCount = ['soil_node', 'water_node', 'weather_node', 'vision_node']
     .filter(id => devices?.[id]?.status === 'ACTIVE' || devices?.[id]?.status === 'PARTIAL').length;
     
   const isOffline = activeNodesCount === 0;
   const healthColor = isOffline ? 'var(--text-inactive)' : getHealthColor(score || 0);
   const visionOnline = devices?.vision_node?.status === 'ACTIVE' || devices?.vision_node?.status === 'PARTIAL';
   
-  const totalNodesCount = 5;
+  const totalNodesCount = 4;
 
   const systems = [
     { label: 'Soil', icon: Sprout, color: 'var(--primary)', active: systemHealth?.soil != null },
     { label: 'Weather', icon: CloudSun, color: 'var(--accent)', active: systemHealth?.weather != null },
     { label: 'Irrigation', icon: Waves, color: 'var(--secondary)', active: systemHealth?.water != null },
-    { label: 'Storage', icon: Database, color: 'var(--text-muted)', active: systemHealth?.storage != null },
     { label: 'Vision', icon: Camera, color: 'var(--primary)', active: visionOnline },
   ];
 
@@ -135,7 +134,7 @@ const HealthOverview = React.memo(({ score, systemHealth, devices }) => {
 
 const SensorCard = React.memo(({ title, icon: Icon, color, status, score, onClick, nodeType }) => {
   const isConnected = status === 'CONNECTED' || status === 'ACTIVE' || status === 'PARTIAL';
-  const systemColor = !isConnected ? 'var(--text-inactive)' : ({ soil: 'var(--primary)', irrigation: 'var(--secondary)', water: 'var(--secondary)', weather: 'var(--accent)', storage: 'var(--text-muted)', vision: 'var(--primary)' }[nodeType] || color);
+  const systemColor = !isConnected ? 'var(--text-inactive)' : ({ soil: 'var(--primary)', irrigation: 'var(--secondary)', water: 'var(--secondary)', weather: 'var(--accent)', vision: 'var(--primary)' }[nodeType] || color);
   const healthColor = !isConnected ? 'var(--border-main)' : (score >= 80 ? 'var(--primary)' : score >= 50 ? 'var(--accent)' : 'var(--danger)');
 
   return (
@@ -577,13 +576,6 @@ const Dashboard = () => {
           status={devices?.['weather_node']?.status || (sensorData?.weather?.temp ? 'ACTIVE' : 'OFFLINE')}
           score={systemHealth?.weather}
           onClick={() => navigate('/weather')}
-        />
-        <SensorCard
-          title="Storage Health" nodeType="storage"
-          icon={Database} color="#64748B"
-          status={devices?.['storage_node']?.status || (sensorData?.storage?.temp ? 'ACTIVE' : 'OFFLINE')}
-          score={systemHealth?.storage}
-          onClick={() => navigate('/storage-hub')}
         />
       </div>
 

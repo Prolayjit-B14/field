@@ -39,7 +39,6 @@ export const processMqttMessage = (topic, data, prev) => {
     soil: { ...prev.soil, npk: { ...prev.soil.npk } },
     weather: { ...prev.weather },
     water: { ...prev.water },
-    storage: { ...prev.storage },
     vision: { ...prev.vision },
     hardware: prev.hardware ? { ...prev.hardware } : {}
   };
@@ -52,11 +51,10 @@ export const processMqttMessage = (topic, data, prev) => {
   else if (topicLower.includes('soil')) nodeType = 'soil';
   else if (topicLower.includes('weather')) nodeType = 'weather';
   else if (topicLower.includes('water') || topicLower.includes('irrigation')) nodeType = 'water';
-  else if (topicLower.includes('storage')) nodeType = 'storage';
   else if (topicLower.includes('vision') || topicLower.includes('camera') || topicLower.includes('cam')) nodeType = 'vision';
 
   // 🛰️ UNIFIED DATA ACCEPTANCE (Accept any valid telemetry)
-  if (nodeType === 'sensors' || data.soil || data.weather || data.water || data.irrigation || data.storage || data.vision) {
+  if (nodeType === 'sensors' || data.soil || data.weather || data.water || data.irrigation || data.vision) {
     if (data.soil) {
       const sData = data.soil;
       newState.soil.moisture = getVal(sData, ['moisture', 'm', 'hum'], prev.soil.moisture);
@@ -86,14 +84,6 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.water.flow = getVal(waterSource, ['flow', 'f', 'water_flow'], prev.water.flow || 0);
       newState.water.pumpActive = (waterSource.pumpActive === 1 || waterSource.pump === 1 || waterSource.pump === "active" || waterSource.pumpActive === true || waterSource.pump === "on");
       newState.water.healthIndex = calculateNodeHealth('irrigation', newState.water);
-    }
-
-    if (data.storage) {
-      const stData = data.storage;
-      newState.storage.temp = getVal(stData, ['temp', 't', 'temperature'], prev.storage.temp);
-      newState.storage.humidity = getVal(stData, ['humidity', 'h', 'hum'], prev.storage.humidity);
-      newState.storage.mq135 = getVal(stData, ['mq135', 'gas', 'air_quality'], prev.storage.mq135);
-      newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
     }
 
     if (data.vision) {
@@ -141,16 +131,6 @@ export const processMqttMessage = (topic, data, prev) => {
       newState.weather.temp = getVal(data, [], prev.weather.temp);
     }
     newState.weather.healthIndex = calculateNodeHealth('weather', newState.weather);
-  }
-  else if (nodeType === 'storage') {
-    if (typeof data === 'object') {
-      newState.storage.temp = getVal(data, ['temp', 't', 'temperature'], prev.storage.temp);
-      newState.storage.humidity = getVal(data, ['humidity', 'h', 'hum'], prev.storage.humidity);
-      newState.storage.mq135 = getVal(data, ['mq135', 'aqi', 'gas'], prev.storage.mq135);
-    } else {
-      newState.storage.temp = getVal(data, [], prev.storage.temp);
-    }
-    newState.storage.healthIndex = calculateNodeHealth('storage', newState.storage);
   }
   else if (nodeType === 'water' || nodeType === 'irrigation') {
     if (typeof data === 'object') {

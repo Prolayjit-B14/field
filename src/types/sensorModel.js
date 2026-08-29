@@ -13,12 +13,6 @@ export const INITIAL_SENSOR_DATA = {
     healthIndex: null,
     oledActive: null
   },
-  storage: { 
-    temp: null, 
-    humidity: null, 
-    mq135: null, 
-    healthIndex: null 
-  },
   weather: { 
     temp: null, 
     humidity: null, 
@@ -62,6 +56,5 @@ export const INITIAL_SYSTEM_HEALTH = {
   soil: null, 
   water: null, 
   weather: null, 
-  storage: null,
   vision: null
 };
