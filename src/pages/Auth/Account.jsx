@@ -161,23 +161,35 @@ const Account = () => {
     try {
       const { Camera: CapCamera, CameraResultType, CameraSource } = await import('@capacitor/camera');
       const image = await CapCamera.getPhoto({
-        quality: 90, allowEditing: true,
+        quality: 80, allowEditing: true,
         resultType: CameraResultType.Base64,
         source: CameraSource.Prompt
       });
 
       if (image?.base64String) {
         setIsUploading(true);
-        const userKey = user?.email || user?.uid || 'guest_user';
-        const storageRef = ref(storage, `profiles/${userKey}_dp.jpg`);
-        await uploadString(storageRef, image.base64String, 'base64', { contentType: 'image/jpeg' });
-        const downloadURL = await getDownloadURL(storageRef);
-        setFormData(prev => ({ ...prev, photo: downloadURL }));
-        await updateUser({ photo: downloadURL });
+        const dataUrl = `data:image/jpeg;base64,${image.base64String}`;
+        let finalPhotoUrl = dataUrl;
+
+        try {
+          const userKey = (user?.email || user?.uid || 'guest_user').replace(/[^a-zA-Z0-9_]/g, '_');
+          const storageRef = ref(storage, `profiles/${userKey}_dp.jpg`);
+          await uploadString(storageRef, image.base64String, 'base64', { contentType: 'image/jpeg' });
+          finalPhotoUrl = await getDownloadURL(storageRef);
+        } catch (storageErr) {
+          console.warn("Storage upload note (using direct local image data):", storageErr);
+        }
+
+        setFormData(prev => ({ ...prev, photo: finalPhotoUrl }));
+        await updateUser({ photo: finalPhotoUrl });
         showToast("Profile Snapshot Updated! 📸");
       }
     } catch (err) {
-      showToast("Camera access restricted.", 'error');
+      console.warn("Camera/Photo action note:", err);
+      // User cancelled or camera denied
+      if (err?.message && !err.message.includes('User cancelled')) {
+        showToast("Could not access photo. Check permissions.", 'error');
+      }
     } finally { setIsUploading(false); }
   };
 
@@ -291,7 +303,12 @@ const Account = () => {
             <h2 style={{ fontSize: '1.8rem', fontWeight: 950, color: 'var(--text-main)', margin: '0 0 4px', letterSpacing: '-0.03em' }}>
               {user?.name || 'Farmer'}
             </h2>
-
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '4px', padding: '4px 10px', borderRadius: '10px', background: 'rgba(66, 133, 244, 0.1)', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
+              <Globe size={12} color="#4285F4" />
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#60A5FA', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                {user?.providerId === 'google.com' || (user?.email && !user?.isGuest && !user?.isOffline) ? 'Google Identity Verified' : user?.isGuest ? 'Guest Session' : 'Direct Account'}
+              </span>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%', marginTop: '8px', zIndex: 1 }}>

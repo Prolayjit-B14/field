@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getStorage } from "firebase/storage";
@@ -16,16 +16,17 @@ const firebaseConfig = {
 
 let app;
 try {
-  app = initializeApp(firebaseConfig);
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 } catch (e) {
   console.warn("Firebase initializeApp note:", e);
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 }
 
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
-// ⚠️ Analytics removed: getAnalytics() was the PRIMARY white-screen crash root cause.
+// ⚠️ Analytics removed to prevent mobile webview crashes
 export const analytics = null;
 
 // 🔐 SET PERMANENT PERSISTENCE SAFELY

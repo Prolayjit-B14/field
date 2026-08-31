@@ -5,7 +5,7 @@ import { processMqttMessage } from '../engines/sensorController';
 import { INITIAL_SENSOR_DATA } from '../types/sensorModel';
 import { processDeviceState, calculateSystemOverview } from '../api/deviceService';
 import { db } from '../api/firebase';
-import { collection, query, where, orderBy, limit, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit, getDocs, addDoc, doc, setDoc } from 'firebase/firestore';
 import { calculateNodeHealth, calculateOverallHealth, getAIv2Recommendations } from '../logic/healthEngine';
 
 const TelemetryContext = createContext();
