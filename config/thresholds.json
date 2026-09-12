@@ -1,0 +1,89 @@
+{
+  "version": "2.0.0",
+  "calibration_dataset": "validation_set_v2",
+  "notes": "All thresholds must be re-calibrated after training. These are informed starting points, not arbitrary constants.",
+
+  "image_quality": {
+    "min_laplacian_variance": 65.0,
+    "min_mean_brightness": 40.0,
+    "max_mean_brightness": 230.0,
+    "min_leaf_coverage_ratio": 0.15,
+    "max_occlusion_ratio": 0.70,
+    "min_illumination_uniformity": 0.25,
+    "face_skin_saturation_min": 0.10,
+    "face_skin_saturation_max": 0.60,
+    "face_skin_hue_min": 0,
+    "face_skin_hue_max": 30,
+    "soil_saturation_max": 0.30,
+    "soil_value_min": 30,
+    "soil_hue_min": 5,
+    "soil_hue_max": 30
+  },
+
+  "onnx_leaf_detector": {
+    "mask_binary_threshold": 0.50,
+    "min_leaf_confidence": 0.40,
+    "min_bbox_area_ratio": 0.10,
+    "min_mask_coverage_ratio": 0.08,
+    "out_of_distribution_below": 0.35
+  },
+
+  "leaf_condition": {
+    "high_confidence": 0.80,
+    "medium_confidence": 0.60,
+    "low_confidence_max": 0.55,
+    "min_evidence_items": 1
+  },
+
+  "pest_detector": {
+    "confirmed_pest_confidence": 0.82,
+    "possible_pest_confidence": 0.60,
+    "min_insect_pixel_area": 36,
+    "require_visual_evidence_for_confirmation": true
+  },
+
+  "damage_detector": {
+    "confirmed_damage_confidence": 0.78,
+    "possible_damage_confidence": 0.58,
+    "min_damage_area_ratio": 0.015
+  },
+
+  "disease_classifier": {
+    "min_confidence": 0.72,
+    "unknown_fallback_below": 0.72,
+    "high_confidence": 0.85,
+    "medium_confidence": 0.65
+  },
+
+  "severity": {
+    "notes": "Thresholds are starting points — re-validate on expert-labeled severity dataset",
+    "none_max_ratio": 0.02,
+    "mild_max_ratio": 0.15,
+    "moderate_max_ratio": 0.40,
+    "severe_min_ratio": 0.40,
+    "unknown_if_mask_unavailable": true
+  },
+
+  "overall": {
+    "low_confidence_threshold": 0.55,
+    "unknown_threshold": 0.40,
+    "ood_entropy_threshold": 2.50,
+    "reliability_notice": true,
+    "require_evidence_for_specific_diagnosis": true
+  },
+
+  "overall_evidence_rules": {
+    "healthy_requires": [
+      "valid_plant_image == true",
+      "leaf_detected == true",
+      "image_quality == 'good'",
+      "leaf_condition == 'healthy'",
+      "leaf_condition.confidence >= 0.80",
+      "pest.status == 'not_detected'",
+      "damage.status == 'not_detected'"
+    ],
+    "discoloration_never_auto_diagnoses_disease": true,
+    "uncertain_on_conflicts": true,
+    "multi_label_allowed": true
+  }
+}

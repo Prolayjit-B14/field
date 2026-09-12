@@ -4,13 +4,13 @@ import { motion } from 'framer-motion';
 import { useApp } from '../state/AppContext';
 import { useTelemetry } from '../state/TelemetryContext';
 import { 
-  Bell, Menu, User, MapPin, ChevronDown, Sun, Moon
+  Bell, Menu, User, Sun, Moon
 } from 'lucide-react';
 
 const AgriSenseLogo = () => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    <span style={{ fontSize: '1.2rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em' }}>
-      AgriSense <span style={{ color: 'var(--primary)' }}>Pro</span>
+  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+    <span style={{ fontSize: '1.25rem', fontWeight: 950, color: 'var(--text-main)', letterSpacing: '-0.04em' }}>
+      AgriSense <span style={{ color: '#15803D' }}>Pro</span>
     </span>
   </div>
 );
@@ -20,7 +20,7 @@ const NotificationDot = React.memo(() => {
   if (!recommendations || recommendations.length === 0) return null;
   return (
     <div style={{ 
-      position: 'absolute', top: '8px', right: '8px', 
+      position: 'absolute', top: '7px', right: '7px', 
       width: '8px', height: '8px',
       background: 'var(--danger)', 
       borderRadius: '50%', border: '2px solid var(--bg-card)'
@@ -36,59 +36,75 @@ const TopBar = ({ title }) => {
   return (
     <header className="top-bar" style={{ 
       position: 'relative', zIndex: 1000, 
-      background: 'var(--glass)',
-      backdropFilter: 'blur(20px)',
+      background: 'var(--bg-card)',
       borderBottom: '1px solid var(--border-main)',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 1rem', height: '60px',
+      padding: '0 16px', height: '58px',
       flexShrink: 0,
       boxShadow: 'var(--shadow-sm)'
     }}>
 
-      {/* LEFT: MENU & TITLE */}
+      {/* LEFT: UNIFORM HAMBURGER MENU BUTTON ACROSS ENTIRE APP */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {location.pathname === '/dashboard' ? (
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsSidebarOpen(prev => !prev)}
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)', color: 'var(--text-main)', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--shadow-sm)' }}
-          >
-            <Menu size={19} strokeWidth={2.5} />
-          </motion.button>
-        ) : (
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsSidebarOpen(prev => !prev)}
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)', color: 'var(--text-main)', cursor: 'pointer', width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--shadow-sm)' }}
-          >
-            <Menu size={19} strokeWidth={2.5} />
-          </motion.button>
-        )}
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={() => setIsSidebarOpen(prev => !prev)}
+          style={{ 
+            background: 'var(--bg-main)', 
+            border: '1px solid var(--border-main)', 
+            color: 'var(--text-main)', 
+            cursor: 'pointer', 
+            width: '38px', 
+            height: '38px', 
+            borderRadius: '12px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            flexShrink: 0 
+          }}
+        >
+          <Menu size={20} strokeWidth={2.5} />
+        </motion.button>
         
         {location.pathname === '/dashboard' ? (
           <AgriSenseLogo />
         ) : (
-          <motion.h1 
-            key={title}
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.2 }}
-            style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', margin: 0, letterSpacing: '-0.02em' }}
-          >
+          <h1 style={{ 
+            fontSize: '1.1rem', 
+            fontWeight: 900, 
+            color: 'var(--text-main)', 
+            margin: 0, 
+            letterSpacing: '-0.02em',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '180px'
+          }}>
             {title}
-          </motion.h1>
+          </h1>
         )}
       </div>
 
       {/* 🔔 RIGHT SIDE: ACTIONS & PROFILE */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
 
         <motion.div 
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/alerts')}
-          style={{ cursor: 'pointer', padding: '8px', background: 'var(--bg-card)', border: '1px solid var(--glass-stroke)', borderRadius: '12px', position: 'relative', boxShadow: 'var(--shadow-sm)' }}
+          style={{ 
+            cursor: 'pointer', 
+            width: '38px', 
+            height: '38px', 
+            background: 'var(--bg-main)', 
+            border: '1px solid var(--border-main)', 
+            borderRadius: '12px', 
+            position: 'relative', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
+          }}
         >
-          <Bell size={20} color="var(--text-muted)" strokeWidth={2} />
+          <Bell size={19} color="var(--text-muted)" strokeWidth={2} />
           <NotificationDot />
         </motion.div>
 
@@ -96,15 +112,21 @@ const TopBar = ({ title }) => {
           whileTap={{ scale: 0.95 }}
           onClick={toggleTheme}
           style={{ 
-            cursor: 'pointer', padding: '8px', background: 'var(--bg-card)', 
-            border: '1px solid var(--glass-stroke)', borderRadius: '12px', 
-            boxShadow: 'var(--shadow-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center' 
+            cursor: 'pointer', 
+            width: '38px', 
+            height: '38px', 
+            background: 'var(--bg-main)', 
+            border: '1px solid var(--border-main)', 
+            borderRadius: '12px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center' 
           }}
         >
           {isDarkMode ? (
-            <Sun size={20} color="var(--accent)" strokeWidth={2.5} />
+            <Sun size={19} color="var(--accent)" strokeWidth={2.5} />
           ) : (
-            <Moon size={20} color="var(--primary)" strokeWidth={2.5} />
+            <Moon size={19} color="#15803D" strokeWidth={2.5} />
           )}
         </motion.div>
         
@@ -112,12 +134,16 @@ const TopBar = ({ title }) => {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/account')}
           style={{ 
-            cursor: 'pointer', width: '38px', height: '38px', 
-            borderRadius: '12px', overflow: 'hidden',
-            background: 'var(--bg-card)', 
-            border: '1px solid var(--glass-stroke)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: 'var(--shadow-sm)' 
+            cursor: 'pointer', 
+            width: '38px', 
+            height: '38px', 
+            borderRadius: '12px', 
+            overflow: 'hidden',
+            background: 'var(--bg-main)', 
+            border: '1px solid var(--border-main)',
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center'
           }}
         >
           {user?.photoURL && !user.photoURL.includes('unsplash.com') ? (
@@ -127,8 +153,8 @@ const TopBar = ({ title }) => {
               style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
           ) : (
-            <span style={{ fontSize: '1rem', fontWeight: 900, color: 'var(--primary)' }}>
-              {(user?.name || user?.displayName || user?.email || 'A').charAt(0).toUpperCase()}
+            <span style={{ fontSize: '1rem', fontWeight: 900, color: '#15803D' }}>
+              {(user?.name || user?.displayName || user?.email || 'P').charAt(0).toUpperCase()}
             </span>
           )}
         </motion.div>

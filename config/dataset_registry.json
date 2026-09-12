@@ -1,0 +1,131 @@
+{
+  "version": "1.0.0",
+  "notes": "Machine-readable dataset catalog. Maps each source to classifier heads and expected class labels.",
+
+  "datasets": {
+    "plantvillage": {
+      "name": "PlantVillage Dataset",
+      "sources": [
+        "https://github.com/spmohanty/plantvillage-dataset",
+        "https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset",
+        "https://www.tensorflow.org/datasets/catalog/plant_village"
+      ],
+      "total_images": 54306,
+      "format": "JPEG, PNG",
+      "conditions": "controlled laboratory (white background)",
+      "crops": ["tomato", "potato", "corn", "grape", "apple", "strawberry", "pepper", "peach", "cherry", "orange", "squash", "blueberry", "raspberry", "soybean"],
+      "num_classes": 38,
+      "class_type": "disease + healthy per crop",
+      "maps_to_models": ["disease_classifier", "leaf_condition_classifier"],
+      "limitation": "Lab conditions — must be combined with field-condition datasets to avoid overfitting to clean backgrounds",
+      "license": "CC BY-SA 4.0 (PD3P License)"
+    },
+
+    "plantdoc": {
+      "name": "PlantDoc Dataset",
+      "sources": [
+        "https://github.com/pratikkayal/PlantDoc-Dataset"
+      ],
+      "total_images": 2598,
+      "format": "JPEG, PNG",
+      "conditions": "field conditions with realistic backgrounds",
+      "crops": ["tomato", "potato", "corn", "wheat", "pepper", "strawberry", "grape", "apple", "cherry"],
+      "num_classes": 27,
+      "class_type": "disease under real field conditions",
+      "maps_to_models": ["disease_classifier", "leaf_condition_classifier"],
+      "advantage": "Real-world backgrounds and lighting — critical for generalization"
+    },
+
+    "mendeley_leaf_disease": {
+      "name": "Plant Leaf Disease Dataset (Mendeley)",
+      "sources": [
+        "https://data.mendeley.com/datasets/5g238dv4ht/1"
+      ],
+      "total_images_raw": 4121,
+      "total_images_augmented": 20956,
+      "format": "JPEG",
+      "conditions": "mixed lab and field",
+      "class_type": "bacterial, fungal, viral per plant",
+      "maps_to_models": ["disease_classifier", "leaf_condition_classifier"],
+      "note": "Use raw images only for training — augmented set may contain data leakage if augmented images overlap train/test split"
+    },
+
+    "leaf_disease_segmentation": {
+      "name": "Leaf Disease Segmentation Dataset",
+      "sources": [
+        "https://www.kaggle.com/datasets/sovitrath/leaf-disease-segmentation-with-trainvalid-split"
+      ],
+      "total_images": 15000,
+      "format": "JPEG + binary masks",
+      "conditions": "PlantDoc-derived with segmentation masks",
+      "class_type": "diseased region binary masks",
+      "maps_to_models": ["severity_estimator", "damage_detector"],
+      "advantage": "Provides lesion masks needed for affected_area_ratio severity estimation"
+    },
+
+    "riceleaf_disease": {
+      "name": "RiceLeaf Disease Detector",
+      "sources": [
+        "https://github.com/PawarMukesh/RiceLeaf-Disease-Detector"
+      ],
+      "total_images": 500,
+      "format": "JPEG",
+      "conditions": "field",
+      "crops": ["rice"],
+      "classes": ["BrownSpot", "Hispa", "LeafBlast"],
+      "maps_to_models": ["disease_classifier"],
+      "note": "Small dataset — use as supplementary, combine with PlantVillage rice classes"
+    },
+
+    "plant_leaf_detection": {
+      "name": "PlantLeafDiseaseDetection",
+      "sources": [
+        "https://github.com/mayur7garg/PlantLeafDiseaseDetection"
+      ],
+      "total_images": 87000,
+      "format": "JPEG",
+      "conditions": "PlantVillage-derived CNN baseline",
+      "class_type": "38 PlantVillage classes",
+      "maps_to_models": ["disease_classifier"],
+      "note": "Largely PlantVillage derivative — check for overlap before using as independent test set"
+    },
+
+    "open_agriculture_journal": {
+      "name": "Open Agriculture Journal — CNN Transfer Learning Study",
+      "sources": [
+        "https://openagriculturejournal.com/VOLUME/18/ELOCATOR/e18743315321139/FULLTEXT/"
+      ],
+      "type": "reference_paper",
+      "total_images": 0,
+      "maps_to_models": [],
+      "use": "Methodology reference for transfer learning strategy and validation approach"
+    }
+  },
+
+  "class_remapping": {
+    "plantvillage_to_condition_classifier": {
+      "description": "38 PlantVillage classes mapped to 3 top-level condition classes",
+      "mapping": {
+        "*___healthy": "HEALTHY",
+        "*___early_blight": "DISEASE",
+        "*___late_blight": "DISEASE",
+        "*___leaf_scorch": "DISEASE",
+        "*___powdery_mildew": "DISEASE",
+        "*___rust": "DISEASE",
+        "*___mosaic_virus": "DISEASE",
+        "*___bacterial_spot": "DISEASE",
+        "*___spider_mites__Two-spotted_spider_mite": "PEST_DAMAGE",
+        "low_confidence_predictions": "UNKNOWN"
+      }
+    }
+  },
+
+  "recommended_split_strategy": {
+    "method": "plant_source_split",
+    "description": "Split by plant/source ID rather than randomly to prevent data leakage from visually similar duplicates",
+    "train_ratio": 0.70,
+    "val_ratio": 0.15,
+    "test_ratio": 0.15,
+    "note": "Test set must be completely isolated — never used during training or threshold selection"
+  }
+}

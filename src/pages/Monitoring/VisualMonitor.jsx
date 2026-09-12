@@ -245,7 +245,7 @@ const VisualMonitor = () => {
   return (
     <motion.div 
       variants={staggerContainer} initial="hidden" animate="visible"
-      className="no-scrollbar" style={{ padding: isFullScreen ? 0 : '1.25rem', paddingBottom: isFullScreen ? 0 : '140px' }}
+      className="no-scrollbar" style={{ padding: isFullScreen ? 0 : '16px', paddingBottom: isFullScreen ? 0 : '24px' }}
     >
       <AnimatePresence>
         {isFullScreen && (

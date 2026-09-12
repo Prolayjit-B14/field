@@ -502,7 +502,7 @@ const Dashboard = () => {
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+      style={{ padding: '16px', paddingBottom: '24px' }}
     >
       {/* Header Section */}
       <motion.section variants={itemFadeUp} style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -563,7 +563,7 @@ const Dashboard = () => {
       <CamCard
         isOnline={visionOnline}
         streamUrl={`http://${sensorData?.vision?.ip || '192.168.4.2'}:81/stream`}
-        onClick={() => navigate('/camera')}
+        onClick={() => navigate('/ai-vision')}
       />
 
       {/* Spacing */}

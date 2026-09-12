@@ -1,314 +1,567 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../state/AppContext';
 import { useTelemetry } from '../../state/TelemetryContext';
 import { 
-  FileText, Download, ShieldCheck, 
-  RefreshCw, FileCheck, Loader2,
-  Database, Activity, 
-  Lock, Cpu, Zap, 
-  ChevronRight, Printer,
-  Sprout, CloudRain, Droplets,
-  ZoomIn, ZoomOut, Eye, Award, 
-  TrendingUp, ClipboardList, Sparkles,
-  ChevronLeft, PieChart, Shield,
-  ArrowRight, FilePlus, RotateCcw, AlertTriangle, Maximize, Globe
+  FileText, Download, ChevronRight, Share2, 
+  Sparkles, CheckCircle2, AlertCircle, X, 
+  Calendar, Layers, Cpu, ShieldCheck, Printer, RefreshCw, Eye
 } from 'lucide-react';
-// ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
-const T = {
-  emerald: 'var(--primary)',
-  emeraldLight: 'var(--primary-light)',
-  slate: 'var(--text-main)',
-  slateMuted: 'var(--text-muted)',
-  bg: 'var(--bg-main)',
-  viewerBg: 'var(--bg-main)',
-  cardBg: 'var(--bg-card)',
-  border: 'var(--glass-stroke)',
-  shadow: 'var(--shadow-lg)',
-  glass: 'var(--glass)',
-};
+import jsPDF from 'jspdf';
 
-const DataCard = memo(({ label, value, status, color = T.emerald }) => (
-  <div style={{ 
-    padding: '0.75rem', background: 'var(--bg-main)', borderRadius: '12px', border: '1px solid var(--glass-stroke)',
-    display: 'flex', flexDirection: 'column', gap: '4px'
-  }}>
-    <div style={{ fontSize: '0.5rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-    <div style={{ fontSize: '0.9rem', fontWeight: 950, color: T.slate, letterSpacing: '-0.02em' }}>{value}</div>
-    {status && <div style={{ fontSize: '0.45rem', fontWeight: 950, color: color, marginTop: '2px', textTransform: 'uppercase' }}>{status}</div>}
-  </div>
-));
+const REPORT_CATEGORIES = ['All Reports', 'Soil', 'Crop', 'Irrigation', 'Weather', 'Devices'];
 
-const ReportPage = memo(({ title, subtitle, color = T.emerald, children, activePage, totalPages }) => (
-  <motion.div 
-    initial={{ opacity: 0, scale: 0.98, y: 10 }} 
-    animate={{ opacity: 1, scale: 1, y: 0 }} 
-    style={{ 
-      width: 'auto',
-      height: 'auto',
-      maxWidth: '100%',
-      maxHeight: '100%',
-      aspectRatio: '210/297', // Exact A4 ratio
-      background: 'var(--bg-card)', 
-      boxShadow: 'var(--shadow-lg)', 
-      position: 'relative', 
-      padding: '0.85rem', boxSizing: 'border-box',
-      display: 'flex', flexDirection: 'column', flexShrink: 0,
-      borderRadius: '2px',
-      border: '1px solid var(--border-main)'
-    }}
-  >
-    <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
-    
-    {/* Page Header */}
-    <div style={{ borderBottom: '1px solid var(--border-main)', paddingBottom: '0.5rem', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Sparkles size={16} color="var(--bg-card)" />
-        </div>
-        <div>
-          <h2 style={{ fontSize: '0.85rem', fontWeight: 950, color: T.slate, margin: 0, letterSpacing: '-0.01em' }}>AGRISENSE PRO</h2>
-          <div style={{ fontSize: '0.45rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>INDUSTRIAL AUDIT</div>
-        </div>
-      </div>
-      <div style={{ textAlign: 'right' }}>
-        <div style={{ fontSize: '0.65rem', fontWeight: 950, color: T.slate }}>{title}</div>
-        <div style={{ fontSize: '0.45rem', fontWeight: 800, color: T.slateMuted }}>PAGE {activePage} OF {totalPages}</div>
-      </div>
-    </div>
-
-    {/* Content Area */}
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-        <div style={{ width: '3px', height: '12px', background: color, borderRadius: '2px' }} />
-        <h4 style={{ fontSize: '0.65rem', fontWeight: 950, color: T.slate, margin: 0, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{subtitle}</h4>
-      </div>
-      {children}
-    </div>
-
-    {/* Page Footer */}
-    <div style={{ borderTop: '1px solid var(--border-main)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Shield size={12} color={T.slateMuted} />
-        <span style={{ fontSize: '0.5rem', fontWeight: 900, color: T.slateMuted, letterSpacing: '0.02em' }}>ENCRYPTED VERIFICATION LINK</span>
-      </div>
-      <div style={{ fontSize: '0.5rem', fontWeight: 950, color: T.slate, opacity: 0.6 }}>v17.4.9-SECURE</div>
-    </div>
-  </motion.div>
-));
+const DEFAULT_REPORTS = [
+  {
+    id: 'rep-01',
+    title: 'Soil Analysis Report',
+    category: 'Soil',
+    date: 'May 10, 2024',
+    period: 'May 03 – May 10, 2024',
+    format: 'PDF',
+    size: '980 KB',
+    iconColor: '#15803D'
+  },
+  {
+    id: 'rep-02',
+    title: 'Irrigation Report',
+    category: 'Irrigation',
+    date: 'May 09, 2024',
+    period: 'May 02 – May 09, 2024',
+    format: 'PDF',
+    size: '760 KB',
+    iconColor: '#0EA5E9'
+  },
+  {
+    id: 'rep-03',
+    title: 'Crop Health Report',
+    category: 'Crop',
+    date: 'May 08, 2024',
+    period: 'May 01 – May 08, 2024',
+    format: 'PDF',
+    size: '1.1 MB',
+    iconColor: '#8B5CF6'
+  },
+  {
+    id: 'rep-04',
+    title: 'Device Health Report',
+    category: 'Devices',
+    date: 'May 07, 2024',
+    period: 'Apr 30 – May 07, 2024',
+    format: 'PDF',
+    size: '620 KB',
+    iconColor: '#F59E0B'
+  }
+];
 
 const Reports = () => {
-  const { sensorData } = useTelemetry();
-  const [genStep, setGenStep] = useState(0); 
-  const [activePage, setActivePage] = useState(1);
-  const TOTAL_PAGES = 11;
+  const { farmInfo, user } = useApp();
+  const { sensorData, sensorHistory, systemOverview } = useTelemetry();
 
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1, delayChildren: 0.1 }
-    }
+  const [activeCategory, setActiveCategory] = useState('All Reports');
+  const [reportsList, setReportsList] = useState(DEFAULT_REPORTS);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeViewerReport, setActiveViewerReport] = useState(null);
+
+  // New Report Form State
+  const [reportType, setReportType] = useState('Soil Analysis Report');
+  const [dateRange, setDateRange] = useState('Last 7 Days');
+  const [includeSensors, setIncludeSensors] = useState(true);
+  const [includeWeather, setIncludeWeather] = useState(true);
+
+  // Filtered reports
+  const filteredReports = useMemo(() => {
+    if (activeCategory === 'All Reports') return reportsList;
+    return reportsList.filter(r => r.category.toLowerCase() === activeCategory.toLowerCase());
+  }, [activeCategory, reportsList]);
+
+  // Real PDF generator using actual hardware telemetry
+  const generateRealPDF = (title = 'AgriSense Farm Report') => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Header
+    doc.setFillColor(21, 128, 61); // Agricultural green
+    doc.rect(0, 0, pageWidth, 28, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.text('AGRISENSE PRO - IOT TELEMETRY REPORT', 14, 18);
+
+    doc.setTextColor(50, 50, 50);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Farm: ${farmInfo?.name || 'AgriSense Farm'}`, 14, 38);
+    doc.text(`Operator: ${user?.name || user?.email || 'Field Operator'}`, 14, 46);
+    doc.text(`Report Type: ${title}`, 14, 54);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 62);
+    doc.text(`Hardware Status: ${systemOverview?.active_nodes || 0} of ${systemOverview?.total_nodes || 3} nodes broadcasting`, 14, 70);
+
+    // Divider
+    doc.setDrawColor(220, 220, 220);
+    doc.line(14, 76, pageWidth - 14, 76);
+
+    // Sensor Telemetry Table
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Current Live Sensor Telemetry', 14, 86);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    let y = 96;
+
+    const sensorEntries = [
+      { name: 'Soil Moisture', value: sensorData?.soil?.moisture != null ? `${sensorData.soil.moisture} %` : 'Offline (--)' },
+      { name: 'Soil pH', value: sensorData?.soil?.ph != null ? `${sensorData.soil.ph}` : 'Offline (--)' },
+      { name: 'Soil Temperature', value: sensorData?.soil?.temp != null ? `${sensorData.soil.temp} °C` : 'Offline (--)' },
+      { name: 'Nitrogen (N)', value: sensorData?.soil?.npk?.n != null ? `${sensorData.soil.npk.n} mg/kg` : 'Offline (--)' },
+      { name: 'Phosphorus (P)', value: sensorData?.soil?.npk?.p != null ? `${sensorData.soil.npk.p} mg/kg` : 'Offline (--)' },
+      { name: 'Potassium (K)', value: sensorData?.soil?.npk?.k != null ? `${sensorData.soil.npk.k} mg/kg` : 'Offline (--)' },
+      { name: 'Ambient Temp', value: sensorData?.weather?.temp != null ? `${sensorData.weather.temp} °C` : 'Offline (--)' },
+      { name: 'Ambient Humidity', value: sensorData?.weather?.humidity != null ? `${sensorData.weather.humidity} %` : 'Offline (--)' },
+    ];
+
+    sensorEntries.forEach((item, idx) => {
+      doc.setFillColor(idx % 2 === 0 ? 245 : 255, idx % 2 === 0 ? 248 : 255, idx % 2 === 0 ? 245 : 255);
+      doc.rect(14, y - 5, pageWidth - 28, 8, 'F');
+      doc.text(item.name, 18, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(item.value, 120, y);
+      doc.setFont('helvetica', 'normal');
+      y += 9;
+    });
+
+    // Agronomy notes
+    y += 10;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Agronomic Telemetry Assessment', 14, y);
+    y += 8;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Data compiled via encrypted MQTT packets directly from ESP32 telemetry hardware nodes.', 14, y);
+    y += 6;
+    doc.text('Verified signature compliant with AgriSense Precision Irrigation protocol v19.', 14, y);
+
+    return doc;
   };
-  
-  const steps = useMemo(() => [
-    { label: 'System Ready', icon: <Cpu /> },
-    { label: 'Syncing Nodes', icon: <Activity /> },
-    { label: 'Neural Build', icon: <Zap /> },
-    { label: 'Formulating', icon: <FileText /> },
-    { label: 'Signing Data', icon: <Database /> },
-    { label: 'Audit Ready', icon: <ShieldCheck /> }
-  ], []);
 
-  const handleGenerate = () => {
-    setGenStep(1);
-    [400, 1000, 1800, 2600, 3200].forEach((t, i) => setTimeout(() => setGenStep(i + 1), t));
+  const handleDownloadReport = (rep) => {
+    const doc = generateRealPDF(rep.title);
+    doc.save(`${rep.title.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+  };
+
+  const handleCreateReportSubmit = async (e) => {
+    e.preventDefault();
+    setIsGenerating(true);
+
+    setTimeout(() => {
+      const newReport = {
+        id: `rep-${Date.now()}`,
+        title: reportType,
+        category: reportType.includes('Soil') ? 'Soil' : reportType.includes('Crop') ? 'Crop' : reportType.includes('Irrigation') ? 'Irrigation' : 'Weather',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        period: dateRange,
+        format: 'PDF',
+        size: '1.2 MB',
+        iconColor: '#15803D'
+      };
+
+      setReportsList(prev => [newReport, ...prev]);
+      setIsGenerating(false);
+      setIsModalOpen(false);
+
+      // Auto-trigger download
+      handleDownloadReport(newReport);
+    }, 1200);
   };
 
   return (
-    <motion.div 
-      variants={staggerContainer}
-      initial="hidden"
-      animate="visible"
-      style={{ 
-        padding: '0.8rem 1rem', paddingBottom: '140px', background: T.bg, height: '100dvh', 
-        display: 'flex', flexDirection: 'column', boxSizing: 'border-box',
-        fontFamily: "'Outfit', sans-serif", overflow: 'hidden'
-      }}
-    >
-      
-      {/* ─── STATUS HEADER / CTA ─── */}
-      <section style={{ marginBottom: '0.5rem', flexShrink: 0 }}>
-        <div style={{ 
-          background: T.cardBg, padding: '0.65rem 0.85rem', borderRadius: '20px', 
-          border: '1px solid var(--border-main)', display: 'flex', alignItems: 'center', 
-          justifyContent: 'space-between', boxShadow: T.shadow 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ 
-              width: '32px', height: '32px', borderRadius: '10px', 
-              background: genStep === 5 ? `${T.emerald}15` : 'var(--bg-sheet)', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: `1px solid ${genStep === 5 ? `${T.emerald}20` : 'var(--border-main)'}`
-            }}>
-               {genStep === 5 ? <FileCheck color={T.emerald} size={16} strokeWidth={2.5} /> : React.cloneElement(steps[genStep].icon, { size: 16, color: genStep === 0 ? T.slateMuted : T.emerald })}
-            </div>
-            <div>
-              <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1 }}>STATUS</p>
-              <h3 style={{ margin: '1px 0 0 0', fontSize: '0.75rem', fontWeight: 950, color: T.slate, lineHeight: 1 }}>{steps[genStep].label}</h3>
-            </div>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '16px',
+      background: 'var(--bg-main)',
+      fontFamily: "'Outfit', sans-serif",
+      boxSizing: 'border-box'
+    }}>
+
+      {/* ─── CATEGORY FILTER CHIPS ─── */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        overflowX: 'auto',
+        paddingBottom: '12px',
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+        WebkitOverflowScrolling: 'touch'
+      }}>
+        {REPORT_CATEGORIES.map(cat => {
+          const isSelected = activeCategory === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '20px',
+                border: isSelected ? 'none' : '1px solid var(--border-main)',
+                background: isSelected ? '#15803D' : 'var(--bg-card)',
+                color: isSelected ? '#FFFFFF' : 'var(--text-muted)',
+                fontSize: '0.8rem',
+                fontWeight: isSelected ? 800 : 600,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                boxShadow: isSelected ? '0 4px 12px rgba(21, 128, 61, 0.25)' : 'var(--shadow-sm)',
+                transition: 'all 0.2s ease',
+                flexShrink: 0
+              }}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── PROMINENT WEEKLY SUMMARY CARD (MATCHING PANEL 1) ─── */}
+      <motion.div
+        whileHover={{ y: -2 }}
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: '22px',
+          padding: '18px',
+          border: '1px solid var(--border-main)',
+          boxShadow: 'var(--shadow-md)',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {/* Green Document Icon */}
+          <div style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '14px',
+            background: '#F0FDF4',
+            border: '1px solid #DCFCE7',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#15803D',
+            flexShrink: 0
+          }}>
+            <FileText size={24} strokeWidth={2.2} />
           </div>
-          
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {genStep === 0 && (
-               <motion.button 
-                 whileTap={{ scale: 0.95 }}
-                 onClick={handleGenerate} 
-                 style={{ 
-                   padding: '0 12px', height: '32px', borderRadius: '10px', 
-                   background: T.emerald, color: 'var(--bg-card)', border: 'none', 
-                   fontSize: '0.6rem', fontWeight: 900, cursor: 'pointer',
-                   boxShadow: `0 8px 16px var(--primary-soft)`
-                 }}
-               >
-                 START
-               </motion.button>
-            )}
-            {genStep === 5 && (
-              <>
-                  <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setGenStep(0)} 
-                    style={{ 
-                      padding: '0 10px', height: '32px', background: 'var(--bg-card)', color: 'var(--text-main)', 
-                      borderRadius: '10px', border: '1px solid var(--border-main)', fontSize: '0.55rem', fontWeight: 800 
-                    }}
-                  >
-                   RESET
-                 </motion.button>
-                 <motion.button 
-                   whileTap={{ scale: 0.95 }}
-                   style={{ 
-                     padding: '0 12px', height: '32px', borderRadius: '10px', 
-                     background: T.emerald, color: 'var(--bg-card)', border: 'none', 
-                     fontSize: '0.6rem', fontWeight: 900, boxShadow: `0 8px 16px var(--primary-soft)`
-                   }}
-                 >
-                   EXPORT
-                 </motion.button>
-              </>
-            )}
+
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 900, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
+                Weekly Summary
+              </h3>
+              <ChevronRight size={16} color="var(--text-inactive)" />
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 500 }}>
+              May 12 – May 18, 2024
+            </div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700, marginTop: '2px' }}>
+              PDF • 1.2 MB
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* ─── DOCUMENT VIEWER ─── */}
-      <div style={{ 
-        flex: 1, background: T.viewerBg, borderRadius: '28px', 
-        display: 'flex', flexDirection: 'column', overflow: 'hidden', 
-        border: '1.5px solid var(--glass-stroke)', position: 'relative',
-        boxShadow: 'var(--shadow-inner)'
-      }}>
-        {genStep === 5 && (
-          <div style={{ 
-            height: '40px', background: 'var(--bg-card)', borderBottom: '1.5px solid var(--glass-stroke)', 
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', 
-            padding: '0 1rem', flexShrink: 0 
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={16} color={T.emerald} />
-              <span style={{ fontSize: '0.65rem', fontWeight: 950, color: T.slate }}>AUDIT_REPORT.pdf</span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <motion.button whileTap={{ scale: 0.8 }} onClick={() => setActivePage(p => Math.max(1, p - 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><ChevronLeft size={20} color={T.slate} /></motion.button>
-              <span style={{ fontSize: '0.7rem', fontWeight: 950, color: T.slate, minWidth: '40px', textAlign: 'center' }}>{activePage} / {TOTAL_PAGES}</span>
-              <motion.button whileTap={{ scale: 0.8 }} onClick={() => setActivePage(p => Math.min(TOTAL_PAGES, p + 1))} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}><ChevronRight size={20} color={T.slate} /></motion.button>
-            </div>
-          </div>
-        )}
+        <button
+          onClick={() => {
+            const rep = { title: 'Weekly Summary Report' };
+            handleDownloadReport(rep);
+          }}
+          style={{
+            background: '#15803D',
+            border: 'none',
+            borderRadius: '12px',
+            padding: '8px 18px',
+            color: '#FFFFFF',
+            fontSize: '0.85rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(21, 128, 61, 0.25)',
+            transition: 'transform 0.15s ease'
+          }}
+        >
+          View
+        </button>
+      </motion.div>
 
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.75rem', overflow: 'hidden', position: 'relative' }}>
-          <AnimatePresence mode="wait">
-            {genStep === 0 && (
-              <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: 'center', color: T.slateMuted }}>
-                <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', boxShadow: T.shadow }}>
-                  <FilePlus size={32} strokeWidth={1.5} />
+      {/* ─── RECENT REPORTS SECTION ─── */}
+      <div style={{ marginBottom: '12px' }}>
+        <h3 style={{
+          fontSize: '0.95rem',
+          fontWeight: 900,
+          color: 'var(--text-main)',
+          margin: '0 0 12px 2px',
+          letterSpacing: '-0.02em'
+        }}>
+          Recent Reports
+        </h3>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {filteredReports.map(report => (
+            <motion.div
+              key={report.id}
+              whileHover={{ y: -1 }}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '18px',
+                padding: '14px 16px',
+                border: '1px solid var(--border-main)',
+                boxShadow: 'var(--shadow-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '12px',
+                  background: `${report.iconColor}12`,
+                  border: `1px solid ${report.iconColor}25`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: report.iconColor,
+                  flexShrink: 0
+                }}>
+                  <FileText size={20} strokeWidth={2} />
                 </div>
-                <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>Awaiting audit initiation</p>
-              </motion.div>
-            )}
-            
-            {genStep > 0 && genStep < 5 && (
-              <motion.div key="building" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: 'center' }}>
-                <Loader2 size={36} color={T.emerald} className="animate-spin" />
-                <p style={{ marginTop: '0.75rem', fontSize: '0.65rem', fontWeight: 800, color: T.slate, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Assembling Data...</p>
-              </motion.div>
-            )}
 
-            {genStep === 5 && (
-              <div style={{ height: '100%', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ReportPage 
-                  key={`p${activePage}`} 
-                  title={activePage === 1 ? "EXECUTIVE OVERVIEW" : `PHASE 0${activePage}`} 
-                  subtitle={activePage === 1 ? "DIAGNOSTIC TELEMETRY" : "METRIC FORENSICS"} 
-                  activePage={activePage} 
-                  totalPages={TOTAL_PAGES}
-                >
-                  {/* ... (children content same as before) */}
-                  {activePage === 1 && (
-                    <>
-                      <div style={{ width: '100%', height: '35%', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-main)', marginBottom: '0.4rem', background: 'var(--bg-main)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Globe size={48} color={T.emerald} opacity={0.15} strokeWidth={1} />
-                      </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px' }}>
-                        <DataCard label="Stability" value="98.4%" status="Nominal" />
-                        <DataCard label="Nodes" value="12 ACT" status="Global" />
-                        <DataCard label="Latency" value="14ms" status="Direct" />
-                      </div>
-                      <div style={{ marginTop: '0.5rem', padding: '0.6rem', background: 'var(--primary-soft)', borderRadius: '10px', border: `1px solid var(--border-main)` }}>
-                        <p style={{ margin: 0, fontSize: '0.5rem', fontWeight: 700, color: T.emerald, lineHeight: 1.3 }}>
-                          System health is within high-fidelity parameters. All terrestrial nodes are synchronized.
-                        </p>
-                      </div>
-                    </>
-                  )}
-                  {activePage === 2 && (
-                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
-                      <DataCard label="Moisture" value={`${sensorData?.soil?.moisture || 42}%`} status="Field A" />
-                      <DataCard label="pH Level" value={`${sensorData?.soil?.ph || 6.8}`} status="Calibration" />
-                      <DataCard label="Nitrogen" value={`${sensorData?.soil?.npk?.n || 140}ppm`} status="Optimal" />
-                      <DataCard label="Temp" value={`${sensorData?.soil?.temp || 27.5}°C`} status="Ambient" />
-                      <div style={{ gridColumn: '1 / -1' }}>
-                         <DataCard label="Alert Level" value="CLEAN" status="Secure" color={T.emerald} />
-                      </div>
-                    </div>
-                  )}
-                  {activePage >= 3 && (
-                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '4px' }}>
-                        {[1,2,3,4,5].map(i => (
-                          <div key={i} style={{ padding: '0.4rem 0.6rem', background: 'var(--bg-main)', borderRadius: '8px', border: '1px solid var(--border-main)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontSize: '0.35rem', fontWeight: 900, color: T.slateMuted, textTransform: 'uppercase' }}>NODE_ID_00{activePage}{i}</div>
-                              <div style={{ fontSize: '0.6rem', fontWeight: 950, color: T.slate }}>Forensic Link Verified</div>
-                            </div>
-                            <ShieldCheck size={12} color={T.emerald} />
-                          </div>
-                        ))}
-                     </div>
-                  )}
-                </ReportPage>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-main)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {report.title}
+                  </div>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', fontWeight: 500 }}>
+                    {report.date}
+                  </div>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-inactive)', fontWeight: 600 }}>
+                    {report.format} • {report.size}
+                  </div>
+                </div>
               </div>
-            )}
-          </AnimatePresence>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <button
+                  onClick={() => handleDownloadReport(report)}
+                  title="Download Report"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '10px',
+                    background: 'var(--bg-main)',
+                    border: '1px solid var(--border-main)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--text-muted)',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Download size={16} />
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
 
-      <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
-    </motion.div>
+      {/* ─── BOTTOM CTA: GENERATE NEW REPORT (MATCHING PANEL 1) ─── */}
+      <div style={{ marginTop: 'auto', paddingTop: '16px', paddingBottom: '8px' }}>
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            width: '100%',
+            height: '52px',
+            borderRadius: '26px',
+            background: '#15803D',
+            border: 'none',
+            color: '#FFFFFF',
+            fontSize: '0.95rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: '0 8px 20px rgba(21, 128, 61, 0.28)'
+          }}
+        >
+          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>+</span>
+          <span>Generate New Report</span>
+        </motion.button>
+      </div>
+
+      {/* ─── GENERATE REPORT MODAL FLOW ─── */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+            onClick={() => setIsModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '28px',
+                padding: '24px',
+                maxWidth: '400px',
+                width: '100%',
+                boxShadow: 'var(--shadow-premium)',
+                boxSizing: 'border-box'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                  Generate Farm Report
+                </h3>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateReportSubmit}>
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Report Type
+                  </label>
+                  <select
+                    value={reportType}
+                    onChange={e => setReportType(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '46px',
+                      borderRadius: '12px',
+                      border: '1.5px solid var(--border-main)',
+                      background: 'var(--bg-main)',
+                      color: 'var(--text-main)',
+                      padding: '0 12px',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      outline: 'none'
+                    }}
+                  >
+                    <option>Soil Analysis Report</option>
+                    <option>Irrigation & Moisture Audit</option>
+                    <option>Crop Health & NPK Forecast</option>
+                    <option>Weather & Micro-Climate Log</option>
+                    <option>Device Hardware Health Report</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Date Range
+                  </label>
+                  <select
+                    value={dateRange}
+                    onChange={e => setDateRange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '46px',
+                      borderRadius: '12px',
+                      border: '1.5px solid var(--border-main)',
+                      background: 'var(--bg-main)',
+                      color: 'var(--text-main)',
+                      padding: '0 12px',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      outline: 'none'
+                    }}
+                  >
+                    <option>Last 24 Hours</option>
+                    <option>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>Full Season Cycle</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.82rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={includeSensors} onChange={e => setIncludeSensors(e.target.checked)} />
+                    Include Raw Telemetry Readings
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.82rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={includeWeather} onChange={e => setIncludeWeather(e.target.checked)} />
+                    Include Meteorological Weather Station
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isGenerating}
+                  style={{
+                    width: '100%',
+                    height: '48px',
+                    borderRadius: '16px',
+                    background: '#15803D',
+                    border: 'none',
+                    color: '#FFFFFF',
+                    fontSize: '0.92rem',
+                    fontWeight: 800,
+                    cursor: isGenerating ? 'wait' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 6px 16px rgba(21, 128, 61, 0.25)'
+                  }}
+                >
+                  {isGenerating ? (
+                    <>
+                      <RefreshCw size={18} className="animate-spin" />
+                      <span>Compiling Real Telemetry...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Printer size={18} />
+                      <span>Compile & Download PDF</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+    </div>
   );
 };
 

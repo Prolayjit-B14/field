@@ -380,7 +380,7 @@ const SoilForensics = () => {
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      style={{ background: 'var(--bg-main)', minHeight: '100%', paddingBottom: '140px', fontFamily: "'Outfit', sans-serif" }}
+      style={{ background: 'var(--bg-main)', minHeight: '100%', paddingBottom: '24px', fontFamily: "'Outfit', sans-serif" }}
     >
       <StepIndicator currentStep={currentStep} />
       <div style={{ padding: '1.25rem' }}>

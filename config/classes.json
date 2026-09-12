@@ -1,0 +1,132 @@
+{
+  "version": "2.0.0",
+  "taxonomy_notes": "8-level hierarchical taxonomy per spec. MVP uses levels 0-3. Production expands to all levels.",
+
+  "level_0_image_status": ["VALID", "INVALID", "LOW_QUALITY", "OUT_OF_DISTRIBUTION"],
+
+  "level_1_plant_presence": ["NO_PLANT", "PLANT_PRESENT", "LEAF_PRESENT", "MULTIPLE_LEAVES"],
+
+  "level_2_overall_condition": [
+    "HEALTHY",
+    "DISEASE",
+    "PEST_DAMAGE",
+    "PHYSICAL_DAMAGE",
+    "STRESS",
+    "MULTIPLE_CONDITIONS",
+    "UNKNOWN"
+  ],
+
+  "level_3_disease_taxonomy": {
+    "FUNGAL": [
+      "early_blight",
+      "late_blight",
+      "gray_leaf_spot",
+      "powdery_mildew",
+      "downy_mildew",
+      "target_spot",
+      "septoria_leaf_spot",
+      "brown_spot",
+      "leaf_mold",
+      "UNKNOWN_FUNGAL"
+    ],
+    "BACTERIAL": [
+      "bacterial_spot",
+      "bacterial_blight",
+      "UNKNOWN_BACTERIAL"
+    ],
+    "VIRAL": [
+      "tomato_mosaic_virus",
+      "tomato_yellow_leaf_curl",
+      "mosaic_virus",
+      "UNKNOWN_VIRAL"
+    ],
+    "OOMYCETE": [
+      "late_blight",
+      "UNKNOWN_OOMYCETE"
+    ],
+    "UNKNOWN_DISEASE": []
+  },
+
+  "level_4_pest_taxonomy": [
+    "IDENTIFIED_PEST",
+    "VISIBLE_INSECT",
+    "FEEDING_DAMAGE",
+    "MINING_DAMAGE",
+    "WEBBING",
+    "EGG_PRESENT",
+    "SPIDER_MITES",
+    "WHITEFLY",
+    "APHID",
+    "UNKNOWN_PEST_DAMAGE"
+  ],
+
+  "level_5_physical_damage_taxonomy": [
+    "TEAR",
+    "BREAK",
+    "CUT",
+    "MISSING_TISSUE",
+    "CRUSH_DAMAGE",
+    "BENDING_DEFORMATION",
+    "UNKNOWN_PHYSICAL_DAMAGE"
+  ],
+
+  "level_6_stress_taxonomy": [
+    "WATER_STRESS",
+    "HEAT_STRESS",
+    "SUN_SCORCH",
+    "NUTRIENT_STRESS",
+    "UNKNOWN_STRESS"
+  ],
+
+  "level_7_severity": ["NONE", "MILD", "MODERATE", "SEVERE", "UNKNOWN"],
+
+  "level_8_confidence": ["HIGH_CONFIDENCE", "MEDIUM_CONFIDENCE", "LOW_CONFIDENCE"],
+
+  "mvp_top_level_classes": {
+    "labels": ["HEALTHY", "DISEASE", "PEST_DAMAGE", "PHYSICAL_DAMAGE", "STRESS", "MULTIPLE_CONDITIONS", "UNKNOWN"],
+    "indices": {
+      "HEALTHY": 0,
+      "DISEASE": 1,
+      "PEST_DAMAGE": 2,
+      "PHYSICAL_DAMAGE": 3,
+      "STRESS": 4,
+      "MULTIPLE_CONDITIONS": 5,
+      "UNKNOWN": 6
+    }
+  },
+
+  "mvp_disease_classes": {
+    "tomato": [
+      "healthy",
+      "early_blight",
+      "late_blight",
+      "leaf_mold",
+      "septoria_leaf_spot",
+      "spider_mites",
+      "target_spot",
+      "mosaic_virus",
+      "UNKNOWN_DISEASE"
+    ],
+    "rice": [
+      "healthy",
+      "brown_spot",
+      "leaf_blast",
+      "bacterial_leaf_blight",
+      "UNKNOWN_DISEASE"
+    ],
+    "potato": [
+      "healthy",
+      "early_blight",
+      "late_blight",
+      "UNKNOWN_DISEASE"
+    ]
+  },
+
+  "legacy_compat": {
+    "plant_detection": ["plant", "leaf", "background"],
+    "leaf_condition": ["healthy", "abnormal", "uncertain"],
+    "physical_damage": ["intact", "torn", "broken", "hole_damage", "damaged_edge", "uncertain"],
+    "pest_detection": ["pest_visible", "pest_not_visible", "possible_pest_damage", "uncertain"],
+    "color_condition": ["normal_green", "yellowing", "browning", "abnormal_discoloration", "uncertain"]
+  }
+}

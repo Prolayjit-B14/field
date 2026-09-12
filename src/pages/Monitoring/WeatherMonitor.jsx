@@ -32,7 +32,8 @@ const itemFadeUp = {
 
 // ─── SUB-COMPONENTS ────────────────────────────────────────────────────────
 
-const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo, unit }) => {
+const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo, unit, sensorId }) => {
+  const navigate = useNavigate();
   const isOffline = value === null || value === undefined;
   const systemColor = isOffline ? 'var(--text-inactive)' : color;
 
@@ -55,7 +56,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
     <motion.div
       variants={itemFadeUp}
       whileTap={{ scale: 0.97 }}
+      onClick={() => navigate('/sensor-detail', { state: { sensorId, from: '/weather' } })}
       style={{
+        cursor: 'pointer',
         borderRadius: 'var(--radius-xl)',
         background: 'var(--bg-card)',
         border: '1px solid ' + (isOffline ? 'var(--glass-stroke)' : systemColor + '30'),
@@ -189,7 +192,7 @@ const WeatherMonitoring = () => {
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+      style={{ padding: '16px', paddingBottom: '24px' }}
     >
       {/* Industrial Hero Card */}
       <motion.div
@@ -274,10 +277,10 @@ const WeatherMonitoring = () => {
 
       {/* Sensor Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Temp"     value={stats.temp}     min={18} max={32} unit="°C" icon={Thermometer} color="#FF6B35" range="18-32 °C" trendInfo={trend.temperature} />
-        <DiagnosticCard label="Humidity" value={stats.humidity} min={40} max={70} unit="%"  icon={Droplets}    color="#4DA8FF" range="40-70 %"  trendInfo={trend.humidity} />
-        <DiagnosticCard label="Sunlight" value={stats.light}    min={1000} max={8000} unit="lx" icon={Sun}     color="#FFD600" range="1k-8k lx" />
-        <DiagnosticCard label="Rain"     value={stats.rain}     min={0} max={100} unit="mm" icon={CloudRain}   color="#3B82F6" range="0-100 mm" />
+        <DiagnosticCard sensorId="weather_temp" label="Temp"     value={stats.temp}     min={18} max={32} unit="°C" icon={Thermometer} color="#FF6B35" range="18-32 °C" trendInfo={trend.temperature} />
+        <DiagnosticCard sensorId="humidity"     label="Humidity" value={stats.humidity} min={40} max={70} unit="%"  icon={Droplets}    color="#4DA8FF" range="40-70 %"  trendInfo={trend.humidity} />
+        <DiagnosticCard sensorId="light"        label="Sunlight" value={stats.light}    min={1000} max={8000} unit="lx" icon={Sun}     color="#FFD600" range="1k-8k lx" />
+        <DiagnosticCard sensorId="rain"         label="Rain"     value={stats.rain}     min={0} max={100} unit="mm" icon={CloudRain}   color="#3B82F6" range="0-100 mm" />
       </div>
 
       {/* Regional Data Grid */}

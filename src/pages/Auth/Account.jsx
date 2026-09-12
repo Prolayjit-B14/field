@@ -1,445 +1,440 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../state/AppContext';
+import { useTelemetry } from '../../state/TelemetryContext';
 import { 
-  Camera, LogOut, Code, Globe, Database, Cpu,
-  User, Mail, Phone, MapPin, Save, Edit3,
-  ChevronRight, ShieldCheck, Fingerprint,
-  Sparkles, AlertCircle, CheckCircle2,
-  Settings, Zap, Wifi, HardDrive, RefreshCw,
-  Github, Info, BookOpen
+  User, Shield, Lock, Bell, ChevronRight, 
+  LogOut, CheckCircle2, Sprout, Globe, Phone, 
+  Mail, X, Save, RefreshCw, Key, ShieldCheck
 } from 'lucide-react';
-import { ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../api/firebase';
-
-// ─── ANIMATION VARIANTS ─────────────────────────────────────────────────────
-const ANIM = {
-  container: {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08 } }
-  },
-  item: {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 25 } }
-  }
-};
-
-// ─── REUSABLE PREMIUM COMPONENTS ─────────────────────────────────────────────
-
-const Badge = ({ children, color = 'var(--primary)', icon: Icon }) => (
-  <div style={{
-    display: 'inline-flex', alignItems: 'center', gap: '6px',
-    padding: '6px 12px', borderRadius: '12px',
-    background: `${color}15`, color: color,
-    fontSize: '0.7rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em'
-  }}>
-    {Icon && <Icon size={12} strokeWidth={3} />}
-    {children}
-  </div>
-);
-
-const SectionHeader = ({ title, icon: Icon, color = 'var(--primary)' }) => (
-  <div style={{ padding: '24px 24px 12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-    <div style={{ 
-      width: '36px', height: '36px', borderRadius: '12px', 
-      background: `${color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center' 
-    }}>
-      {Icon && <Icon size={18} color={color} strokeWidth={2.5} />}
-    </div>
-    <h3 style={{ 
-      fontSize: '0.75rem', fontWeight: 900, color: 'var(--text-muted)', 
-      textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 
-    }}>
-      {title}
-    </h3>
-  </div>
-);
-
-const InfoRow = ({ label, value, icon: Icon, color = 'var(--secondary)', isEditing, onChange, placeholder, type = "text", readOnly }) => (
-  <div style={{ 
-    padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '20px',
-    transition: 'all 0.3s ease'
-  }}>
-    <div style={{ 
-      width: '42px', height: '42px', borderRadius: '14px', 
-      background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0
-    }}>
-      {Icon && <Icon size={20} color={color} strokeWidth={2} />}
-    </div>
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>
-        {label}
-      </p>
-      {isEditing && !readOnly ? (
-        <motion.input 
-          initial={{ opacity: 0, x: -5 }} animate={{ opacity: 1, x: 0 }}
-          type={type} value={value} onChange={onChange} placeholder={placeholder}
-          style={{ 
-            width: '100%', border: 'none', padding: '4px 0', 
-            fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', 
-            outline: 'none', background: 'transparent', borderBottom: '2px solid var(--primary)'
-          }}
-        />
-      ) : (
-        <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {value || <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>Not set</span>}
-        </p>
-      )}
-    </div>
-  </div>
-);
-
-const StatCard = ({ label, value, icon: Icon, color }) => (
-  <div className="premium-card" style={{ 
-    padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '6px', 
-    border: '1px solid var(--glass-stroke)', background: 'var(--bg-card)'
-  }}>
-    <div style={{ 
-      width: '32px', height: '32px', borderRadius: '10px', 
-      background: `${color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0
-    }}>
-      {Icon && <Icon size={16} color={color} strokeWidth={2.5} />}
-    </div>
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flex: 1 }}>
-      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{label}</span>
-      <span style={{ fontSize: '1rem', fontWeight: 950, color: 'var(--text-main)' }}>{value}</span>
-    </div>
-  </div>
-);
-
-// ─── MAIN ACCOUNT COMPONENT ─────────────────────────────────────────────────
 
 const Account = () => {
   const navigate = useNavigate();
-  const { 
-    user, updateUser, logout, farmInfo, updateBranding, syncDeviceId, currentGPS, syncGPS, profileMeta, isDarkMode, toggleTheme
-  } = useApp();
-  
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({ 
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    location: user?.location || '',
-    photo: user?.photo || user?.photoURL || ''
-  });
+  const { user, farmInfo, updateUser, updateBranding, logout, resetPassword } = useApp();
+  const { systemOverview, devices } = useTelemetry();
 
-  const [codename, setCodename] = useState(farmInfo?.projectName || '');
-  const [clientId, setClientId] = useState(farmInfo?.name || '');
+  const [activeModal, setActiveModal] = useState(null); // 'personal' | 'farm' | 'security' | 'accounts' | 'notifications' | null
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
+  // Form states
+  const [editName, setEditName] = useState(user?.name || 'Pro B');
+  const [editPhone, setEditPhone] = useState(user?.phone || '+91 98765 43210');
+  const [editFarmName, setEditFarmName] = useState(farmInfo?.name || 'Krishnanagar Farm');
+  const [editLocation, setEditLocation] = useState(user?.location || 'Krishnanagar, West Bengal');
 
-  useEffect(() => {
-    if (user && !isSaving) {
-      setFormData({
-        name: user.name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        location: user.location || '',
-        photo: user.photo || user.photoURL || ''
-      });
-    }
-  }, [user, isSaving]);
+  const totalDevicesCount = Object.keys(devices || {}).length || 5;
 
-  useEffect(() => {
-    if (farmInfo && !isSaving) {
-      setCodename(farmInfo.projectName || '');
-      setClientId(farmInfo.name || '');
-    }
-  }, [farmInfo, isSaving]);
-
-  const handleImageUpload = async () => {
-    try {
-      const { Camera: CapCamera, CameraResultType, CameraSource } = await import('@capacitor/camera');
-      const image = await CapCamera.getPhoto({
-        quality: 80, allowEditing: true,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Prompt
-      });
-
-      if (image?.base64String) {
-        setIsUploading(true);
-        const dataUrl = `data:image/jpeg;base64,${image.base64String}`;
-        let finalPhotoUrl = dataUrl;
-
-        try {
-          const userKey = (user?.email || user?.uid || 'guest_user').replace(/[^a-zA-Z0-9_]/g, '_');
-          const storageRef = ref(storage, `profiles/${userKey}_dp.jpg`);
-          await uploadString(storageRef, image.base64String, 'base64', { contentType: 'image/jpeg' });
-          finalPhotoUrl = await getDownloadURL(storageRef);
-        } catch (storageErr) {
-          console.warn("Storage upload note (using direct local image data):", storageErr);
-        }
-
-        setFormData(prev => ({ ...prev, photo: finalPhotoUrl }));
-        await updateUser({ photo: finalPhotoUrl });
-        showToast("Profile Snapshot Updated! 📸");
-      }
-    } catch (err) {
-      console.warn("Camera/Photo action note:", err);
-      // User cancelled or camera denied
-      if (err?.message && !err.message.includes('User cancelled')) {
-        showToast("Could not access photo. Check permissions.", 'error');
-      }
-    } finally { setIsUploading(false); }
-  };
-
-  const handleFetchLocation = async () => {
-    try {
-      const city = await syncGPS();
-      if (city) showToast(`Geospatial Link Active: ${city} 📍`);
-      else showToast("GPS Link Timeout.", 'error');
-    } catch (err) {
-      showToast("GPS Link Timeout.", 'error');
-    }
-  };
-
-  const handleSaveChanges = async () => {
-    if (isSaving) return;
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
     setIsSaving(true);
     try {
-      const success = await updateUser(formData);
-      if (success) {
-        const brandSuccess = await updateBranding({ projectName: codename, name: clientId });
-        if (brandSuccess) {
-          syncDeviceId(codename, clientId);
-          showToast("Cloud Synchronized Successfully ✅");
-          setIsEditing(false);
-        } else showToast("Device Info Save Failed.", 'error');
-      } else showToast("Profile Sync Error.", 'error');
-    } catch (e) { 
-      showToast("Sync Error Occurred.", 'error'); 
-    } finally { setIsSaving(false); }
+      await updateUser({
+        name: editName,
+        phone: editPhone,
+        location: editLocation
+      });
+      if (editFarmName !== farmInfo?.name) {
+        updateBranding({ ...farmInfo, name: editFarmName });
+      }
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setActiveModal(null);
+      }, 1000);
+    } catch (err) {
+      console.warn("Save profile note:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  const handleSendResetPassword = async () => {
+    if (!user?.email) return;
+    setIsSaving(true);
+    await resetPassword(user.email);
+    setIsSaving(false);
+    setSaveSuccess(true);
+    setTimeout(() => {
+      setSaveSuccess(false);
+      setActiveModal(null);
+    }, 1500);
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  // Get first letter of display name for avatar
+  const initial = (user?.name || 'P').charAt(0).toUpperCase();
+
   return (
-    <motion.div 
-      initial="hidden" animate="visible" variants={ANIM.container}
-      className="no-scrollbar" 
-      style={{ 
-        padding: '20px', paddingBottom: '140px', background: 'var(--bg-main)', 
-        minHeight: '100dvh', display: 'flex', flexDirection: 'column', 
-        gap: '24px', boxSizing: 'border-box', fontFamily: "'Outfit', sans-serif" 
-      }}
-    >
-      
-      {/* 🛡️ TOAST NOTIFICATION */}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '16px',
+      background: 'var(--bg-main)',
+      fontFamily: "'Outfit', sans-serif",
+      boxSizing: 'border-box'
+    }}>
+
+      {/* ─── PROFILE HERO CARD (MATCHING PANEL 2) ─── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{
+          background: 'var(--bg-card)',
+          borderRadius: '26px',
+          padding: '24px 20px 20px',
+          border: '1px solid var(--border-main)',
+          boxShadow: 'var(--shadow-md)',
+          marginBottom: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          textAlign: 'center',
+          position: 'relative'
+        }}
+      >
+        {/* Large Green Circular Initial Avatar */}
+        <div style={{
+          width: '74px',
+          height: '74px',
+          borderRadius: '50%',
+          background: '#15803D',
+          color: '#FFFFFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '2rem',
+          fontWeight: 900,
+          boxShadow: '0 8px 20px rgba(21, 128, 61, 0.28)',
+          marginBottom: '12px'
+        }}>
+          {user?.photoURL ? (
+            <img src={user.photoURL} alt="Avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+          ) : (
+            initial
+          )}
+        </div>
+
+        {/* User Name & Verified Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '4px' }}>
+          <h2 style={{
+            fontSize: '1.25rem',
+            fontWeight: 900,
+            color: 'var(--text-main)',
+            margin: 0,
+            letterSpacing: '-0.02em'
+          }}>
+            {user?.name || 'Pro B'}
+          </h2>
+
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            padding: '2px 8px',
+            borderRadius: '12px',
+            background: '#DCFCE7',
+            color: '#15803D',
+            fontSize: '0.65rem',
+            fontWeight: 800
+          }}>
+            <CheckCircle2 size={11} strokeWidth={3} />
+            <span>Verified</span>
+          </div>
+        </div>
+
+        {/* Email */}
+        <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '2px' }}>
+          {user?.email || 'contact.prolay14@gmail.com'}
+        </div>
+
+        {/* Role */}
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-inactive)', fontWeight: 600, marginBottom: '20px' }}>
+          Farmer
+        </div>
+
+        {/* ─── 3-COLUMN STATS ROW ─── */}
+        <div style={{
+          width: '100%',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          borderTop: '1px solid var(--border-main)',
+          paddingTop: '16px'
+        }}>
+          {/* Farm */}
+          <div style={{ textAlign: 'left', paddingRight: '4px' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)' }}>Farm</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {farmInfo?.name || 'Krishnanagar Farm'}
+            </div>
+          </div>
+
+          {/* Joined */}
+          <div style={{ textAlign: 'center', padding: '0 4px', borderLeft: '1px solid var(--border-main)', borderRight: '1px solid var(--border-main)' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)' }}>Joined</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+              Jan 15, 2024
+            </div>
+          </div>
+
+          {/* Devices */}
+          <div style={{ textAlign: 'right', paddingLeft: '4px' }}>
+            <div style={{ fontSize: '0.65rem', fontWeight: 600, color: 'var(--text-muted)' }}>Devices</div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '2px' }}>
+              {totalDevicesCount} Connected
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ─── PROFILE INFORMATION LIST (MATCHING PANEL 2) ─── */}
+      <div style={{ marginBottom: '20px' }}>
+        <h3 style={{
+          fontSize: '0.92rem',
+          fontWeight: 900,
+          color: 'var(--text-main)',
+          margin: '0 0 10px 4px',
+          letterSpacing: '-0.02em'
+        }}>
+          Profile Information
+        </h3>
+
+        <div style={{
+          background: 'var(--bg-card)',
+          borderRadius: '22px',
+          border: '1px solid var(--border-main)',
+          boxShadow: 'var(--shadow-sm)',
+          overflow: 'hidden'
+        }}>
+          {[
+            { id: 'personal', label: 'Personal Information', icon: User },
+            { id: 'farm', label: 'Farm Information', icon: Sprout },
+            { id: 'security', label: 'Security & Login', icon: Lock },
+            { id: 'accounts', label: 'Connected Accounts', icon: Globe },
+            { id: 'notifications', label: 'Notification Settings', icon: Bell }
+          ].map((item, idx, arr) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.id}
+                onClick={() => setActiveModal(item.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '16px 18px',
+                  cursor: 'pointer',
+                  borderBottom: idx < arr.length - 1 ? '1px solid var(--border-main)' : 'none',
+                  transition: 'background 0.15s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div style={{ color: 'var(--text-muted)' }}>
+                    <Icon size={19} strokeWidth={2} />
+                  </div>
+                  <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                    {item.label}
+                  </span>
+                </div>
+
+                <ChevronRight size={18} color="var(--text-inactive)" />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ─── RED OUTLINED SIGN OUT BUTTON (MATCHING PANEL 2) ─── */}
+      <div style={{ marginTop: 'auto', paddingTop: '8px', paddingBottom: '12px' }}>
+        <motion.button
+          whileHover={{ scale: 1.01, background: '#FEF2F2' }}
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSignOut}
+          style={{
+            width: '100%',
+            height: '50px',
+            borderRadius: '20px',
+            background: 'var(--bg-card)',
+            border: '1.5px solid #FCA5A5',
+            color: '#DC2626',
+            fontSize: '0.92rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            boxShadow: 'var(--shadow-sm)'
+          }}
+        >
+          <LogOut size={18} strokeWidth={2.2} />
+          <span>Sign Out</span>
+        </motion.button>
+      </div>
+
+      {/* ─── INTERACTIVE EDIT MODALS ─── */}
       <AnimatePresence>
-        {toast && (
+        {activeModal && (
           <motion.div
-            initial={{ y: -100, opacity: 0, scale: 0.9, x: '-50%' }}
-            animate={{ y: 30, opacity: 1, scale: 1, x: '-50%' }}
-            exit={{ y: -100, opacity: 0, scale: 0.9, x: '-50%' }}
-            style={{ 
-              position: 'fixed', top: 0, left: '50%', transform: 'translateX(-50%)', zIndex: 5000,
-              background: toast?.type === 'error' ? 'var(--danger)' : 'var(--text-main)',
-              backdropFilter: 'blur(20px)', color: 'white', padding: '14px 28px', 
-              borderRadius: 'var(--radius-2xl)', fontWeight: 800, fontSize: '0.85rem',
-              boxShadow: 'var(--shadow-premium)', border: '1px solid var(--glass-border)',
-              display: 'flex', alignItems: 'center', gap: '12px'
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
             }}
+            onClick={() => setActiveModal(null)}
           >
-            {toast?.type === 'error' ? <AlertCircle size={18} /> : <CheckCircle2 size={18} color="var(--primary)" />}
-            <span>{toast?.message}</span>
+            <motion.div
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{
+                background: 'var(--bg-card)',
+                borderRadius: '28px',
+                padding: '24px',
+                maxWidth: '400px',
+                width: '100%',
+                boxShadow: 'var(--shadow-premium)',
+                boxSizing: 'border-box'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 900, color: 'var(--text-main)' }}>
+                  {activeModal === 'personal' && 'Personal Information'}
+                  {activeModal === 'farm' && 'Farm Information'}
+                  {activeModal === 'security' && 'Security & Login'}
+                  {activeModal === 'accounts' && 'Connected Accounts'}
+                  {activeModal === 'notifications' && 'Notification Settings'}
+                </h3>
+                <button onClick={() => setActiveModal(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                  <X size={20} />
+                </button>
+              </div>
+
+              {saveSuccess && (
+                <div style={{ background: '#DCFCE7', border: '1px solid #86EFAC', color: '#15803D', borderRadius: '12px', padding: '10px', fontSize: '0.82rem', fontWeight: 700, marginBottom: '14px', textAlign: 'center' }}>
+                  ✓ Profile changes successfully saved!
+                </div>
+              )}
+
+              {/* Personal Information */}
+              {activeModal === 'personal' && (
+                <form onSubmit={handleSaveProfile}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Full Name</label>
+                    <input type="text" value={editName} onChange={e => setEditName(e.target.value)} style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-main)', padding: '0 12px', fontSize: '0.9rem', outline: 'none' }} />
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Phone Number</label>
+                    <input type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)} style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-main)', padding: '0 12px', fontSize: '0.9rem', outline: 'none' }} />
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Location</label>
+                    <input type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)} style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-main)', padding: '0 12px', fontSize: '0.9rem', outline: 'none' }} />
+                  </div>
+                  <button type="submit" disabled={isSaving} style={{ width: '100%', height: '48px', borderRadius: '14px', background: '#15803D', border: 'none', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}>
+                    {isSaving ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </form>
+              )}
+
+              {/* Farm Information */}
+              {activeModal === 'farm' && (
+                <form onSubmit={handleSaveProfile}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Farm Name</label>
+                    <input type="text" value={editFarmName} onChange={e => setEditFarmName(e.target.value)} style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-main)', padding: '0 12px', fontSize: '0.9rem', outline: 'none' }} />
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Farm ID</label>
+                    <input type="text" readOnly value="FARM-001" style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-muted)', padding: '0 12px', fontSize: '0.9rem' }} />
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Primary Crop</label>
+                    <input type="text" readOnly value="Rice & Precision Vegetables" style={{ width: '100%', height: '44px', borderRadius: '12px', border: '1.5px solid var(--border-main)', background: 'var(--bg-main)', color: 'var(--text-muted)', padding: '0 12px', fontSize: '0.9rem' }} />
+                  </div>
+                  <button type="submit" disabled={isSaving} style={{ width: '100%', height: '48px', borderRadius: '14px', background: '#15803D', border: 'none', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}>
+                    {isSaving ? 'Updating...' : 'Save Farm Info'}
+                  </button>
+                </form>
+              )}
+
+              {/* Security & Login */}
+              {activeModal === 'security' && (
+                <div>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                    Manage your credentials or send a password reset link to your registered email address ({user?.email}).
+                  </p>
+                  <button onClick={handleSendResetPassword} disabled={isSaving} style={{ width: '100%', height: '48px', borderRadius: '14px', background: '#15803D', border: 'none', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer', marginBottom: '10px' }}>
+                    {isSaving ? 'Sending Link...' : 'Send Password Recovery Email'}
+                  </button>
+                  <button onClick={() => setActiveModal(null)} style={{ width: '100%', height: '44px', borderRadius: '14px', background: 'transparent', border: '1px solid var(--border-main)', color: 'var(--text-main)', fontWeight: 700, cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                </div>
+              )}
+
+              {/* Connected Accounts */}
+              {activeModal === 'accounts' && (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border-main)' }}>
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>Google Account</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{user?.email}</div>
+                    </div>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#15803D' }}>Connected</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 0' }}>
+                    <div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-main)' }}>MQTT Telemetry Broker</div>
+                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>broker.hivemq.com:1883</div>
+                    </div>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#15803D' }}>Active</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Notification Settings */}
+              {activeModal === 'notifications' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', cursor: 'pointer' }}>
+                    Push Notifications
+                    <input type="checkbox" defaultChecked />
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', cursor: 'pointer' }}>
+                    Critical Threshold Alerts
+                    <input type="checkbox" defaultChecked />
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-main)', cursor: 'pointer' }}>
+                    Daily Telemetry Digest
+                    <input type="checkbox" defaultChecked />
+                  </label>
+                  <button onClick={() => setActiveModal(null)} style={{ marginTop: '10px', width: '100%', height: '46px', borderRadius: '14px', background: '#15803D', border: 'none', color: '#FFFFFF', fontWeight: 800, cursor: 'pointer' }}>
+                    Done
+                  </button>
+                </div>
+              )}
+
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 🚀 1. PROFILE HERO SECTION */}
-      <motion.div variants={ANIM.item} style={{ position: 'relative' }}>
-        <div className="premium-card" style={{ 
-          padding: '32px 24px', position: 'relative', overflow: 'hidden',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
-          background: 'var(--bg-card)', boxShadow: 'var(--shadow-premium)'
-        }}>
-          {/* Abstract background shapes */}
-          <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'var(--primary)', filter: 'blur(100px)', opacity: 0.08 }} />
-          <div style={{ position: 'absolute', bottom: '-50px', left: '-50px', width: '200px', height: '200px', background: 'var(--secondary)', filter: 'blur(100px)', opacity: 0.08 }} />
-
-          {/* Avatar Container */}
-          <div style={{ position: 'relative' }} onClick={handleImageUpload}>
-            <motion.div 
-              whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-              style={{ 
-                width: '110px', height: '110px', borderRadius: '40px', 
-                background: 'linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%)',
-                boxShadow: '0 15px 35px rgba(16, 185, 129, 0.25)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', cursor: 'pointer', border: '4px solid var(--bg-card)'
-              }}
-            >
-              {formData.photo ? (
-                <img src={formData.photo} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: isUploading ? 0.4 : 1 }} alt="Profile" />
-              ) : (
-                <User size={48} color="white" strokeWidth={1.5} />
-              )}
-              {isUploading && (
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.6)' }}>
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: '24px', height: '24px', border: '3px solid var(--primary)', borderTopColor: 'transparent', borderRadius: '50%' }} />
-                </div>
-              )}
-            </motion.div>
-            <div style={{ 
-              position: 'absolute', bottom: '2px', right: '2px', 
-              background: 'var(--primary)', width: '32px', height: '32px', 
-              borderRadius: '12px', border: '3px solid var(--bg-card)', color: 'white', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              boxShadow: 'var(--shadow-md)' 
-            }}>
-              <Camera size={14} strokeWidth={2.5} />
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center', zIndex: 1 }}>
-            <h2 style={{ fontSize: '1.8rem', fontWeight: 950, color: 'var(--text-main)', margin: '0 0 4px', letterSpacing: '-0.03em' }}>
-              {user?.name || 'Farmer'}
-            </h2>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '4px', padding: '4px 10px', borderRadius: '10px', background: 'rgba(66, 133, 244, 0.1)', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
-              <Globe size={12} color="#4285F4" />
-              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#60A5FA', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                {user?.providerId === 'google.com' || (user?.email && !user?.isGuest && !user?.isOffline) ? 'Google Identity Verified' : user?.isGuest ? 'Guest Session' : 'Direct Account'}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%', marginTop: '8px', zIndex: 1 }}>
-            <StatCard label="Nodes" value={profileMeta?.nodesManaged || 5} icon={Cpu} color="var(--secondary)" />
-            <StatCard 
-              label="Level" 
-              value={user?.email === 'prolayjitbiswas14112004@gmail.com' ? 'Admin' : 'Farmer'} 
-              icon={ShieldCheck} 
-              color="var(--primary)" 
-            />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 📋 2. PERSONAL INFORMATION */}
-      <motion.div variants={ANIM.item}>
-        <div className="premium-card" style={{ padding: 0, overflow: 'hidden', background: 'var(--bg-card)', boxShadow: 'var(--shadow-md)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: '20px' }}>
-            <SectionHeader title="Account Identity" icon={Fingerprint} color="var(--accent)" />
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              onClick={() => isEditing ? handleSaveChanges() : setIsEditing(true)}
-              style={{ 
-                padding: '8px 16px', borderRadius: '12px', 
-                background: isEditing ? 'var(--primary)' : 'var(--bg-main)',
-                color: isEditing ? 'white' : 'var(--text-main)',
-                border: '1px solid var(--glass-stroke)',
-                fontSize: '0.7rem', fontWeight: 950, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                boxShadow: isEditing ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
-              }}
-            >
-              {isEditing ? (isSaving ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />) : <Edit3 size={14} />}
-              {isEditing ? (isSaving ? 'SAVING...' : 'SAVE') : 'EDIT'}
-            </motion.button>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <InfoRow label="Legal Name" value={formData.name} isEditing={isEditing} onChange={e => setFormData({...formData, name: e.target.value})} icon={User} color="var(--accent)" />
-            <div style={{ height: '1px', background: 'var(--bg-main)', margin: '0 24px', opacity: 0.5 }} />
-            <InfoRow label="Email Registry" value={formData.email} readOnly icon={Mail} color="var(--secondary)" />
-            <div style={{ height: '1px', background: 'var(--bg-main)', margin: '0 24px', opacity: 0.5 }} />
-            <InfoRow label="Primary Phone" type="tel" value={formData.phone} isEditing={isEditing} onChange={e => setFormData({...formData, phone: e.target.value})} icon={Phone} color="var(--primary)" />
-            <div style={{ height: '1px', background: 'var(--bg-main)', margin: '0 24px', opacity: 0.5 }} />
-            
-            <div onClick={handleFetchLocation} style={{ padding: '16px 24px', display: 'flex', alignItems: 'center', gap: '20px', cursor: 'pointer' }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '14px', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <MapPin size={20} color="var(--danger)" strokeWidth={2} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <p style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Deployment Location</p>
-                <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-main)', margin: 0 }}>{currentGPS?.city || 'Locating Field...'}</p>
-              </div>
-              <motion.div whileTap={{ rotate: 180 }} style={{ color: 'var(--primary)' }}><RefreshCw size={18} /></motion.div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-
-
-
-
-      {/* 💎 PREMIUM FOOTER SECTION */}
-      <motion.div variants={ANIM.item} style={{ marginTop: '32px', position: 'relative' }}>
-        <div className="premium-card" style={{ 
-          padding: '40px 24px', borderRadius: '32px',
-          background: 'var(--bg-card)',
-          boxShadow: 'var(--shadow-premium)',
-          border: '1px solid var(--glass-stroke)',
-          overflow: 'hidden', position: 'relative'
-        }}>
-          {/* Subtle Decorative Elements */}
-          <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '180px', height: '180px', background: 'var(--secondary-soft)', borderRadius: '50%', filter: 'blur(60px)', opacity: 0.3 }} />
-          <div style={{ position: 'absolute', bottom: '-40px', left: '-20px', width: '220px', height: '220px', background: 'var(--primary-soft)', borderRadius: '50%', filter: 'blur(70px)', opacity: 0.3 }} />
-
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Minimalist Build Identity */}
-            <div style={{ 
-              textAlign: 'center', marginBottom: '24px', padding: '12px',
-              borderTop: '1px solid var(--glass-stroke)', borderBottom: '1px solid var(--glass-stroke)'
-            }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-                Built by <span style={{ color: 'var(--primary)' }}>SemiColon</span> • Version {farmInfo?.version?.replace(/[^0-9.]/g, '') || '1.4.3'}
-              </span>
-            </div>
-
-            {/* Premium Links */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '20px' }}>
-              {[
-                { icon: Github, label: 'Source', color: 'var(--primary)', url: 'https://github.com/Prolayjit-B14/Agri-Sense' },
-                { icon: Info, label: 'About', color: 'var(--secondary)', action: () => showToast("AgriSense Pro: Engineered for Industrial Precision 🛰️") },
-                { icon: BookOpen, label: 'Docs', color: 'var(--primary)', url: 'https://github.com/Prolayjit-B14/Agri-Sense#readme' }
-              ].map((item, i) => (
-                <motion.button
-                  key={i}
-                  whileTap={{ scale: 0.92 }}
-                  onClick={item.url ? () => window.open(item.url, '_blank') : item.action}
-                  className="premium-card"
-                  style={{ 
-                    padding: '12px 8px', 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px',
-                    color: 'var(--text-main)', cursor: 'pointer'
-                  }}
-                >
-                  {React.createElement(item.icon, { size: 18, color: item.color, strokeWidth: 2.5 })}
-                  <span style={{ fontSize: '0.65rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{item.label}</span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* 🚀 GLOBAL ACTIONS */}
-      <motion.div variants={ANIM.item} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
-        <motion.button 
-          whileHover={{ background: 'var(--danger)', color: 'white' }} whileTap={{ scale: 0.98 }}
-          onClick={() => { logout(); navigate('/login'); }}
-          style={{ 
-            height: '56px', borderRadius: 'var(--radius-md)', background: 'var(--bg-card)', 
-            color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.2)', fontWeight: 800, 
-            fontSize: '0.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', 
-            justifyContent: 'center', gap: '10px', transition: 'all 0.3s ease'
-          }}
-        >
-          <LogOut size={18} /> LOG OUT
-        </motion.button>
-      </motion.div>
-
-    </motion.div>
+    </div>
   );
 };
 

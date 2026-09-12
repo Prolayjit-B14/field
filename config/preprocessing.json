@@ -1,0 +1,25 @@
+{
+  "classification_input_size": [224, 224],
+  "detection_input_size": [320, 320],
+  "mean": [0.485, 0.456, 0.406],
+  "std": [0.229, 0.224, 0.225],
+  "color_spaces": ["RGB", "HSV", "LAB"],
+  "quality_assurance": {
+    "blur_method": "laplacian_variance",
+    "blur_threshold": 65.0,
+    "brightness_method": "luminance_rms",
+    "brightness_range": [40, 230],
+    "leaf_segmentation_hsv_ranges": [
+      {"lower": [25, 40, 40], "upper": [85, 255, 255]},
+      {"lower": [10, 50, 50], "upper": [25, 255, 255]}
+    ]
+  },
+  "augmentations": {
+    "rotation_limit_deg": 15,
+    "brightness_contrast_limit": 0.15,
+    "horizontal_flip_prob": 0.5,
+    "blur_limit": 3,
+    "shadow_injection_prob": 0.25,
+    "scale_limit": 0.10
+  }
+}

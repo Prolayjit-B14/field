@@ -641,8 +641,8 @@ const AnalyticsHub = () => {
       style={{ 
         background: 'var(--bg-main)', 
         minHeight: '100%', 
-        padding: '1.25rem', 
-        paddingBottom: '140px',
+        padding: '16px', 
+        paddingBottom: '24px',
         fontFamily: "'Outfit', sans-serif", 
         display: 'flex', 
         flexDirection: 'column' 

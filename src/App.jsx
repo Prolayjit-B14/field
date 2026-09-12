@@ -32,14 +32,24 @@ const Account = React.lazy(() => import('./pages/Auth/Account'));
 const AdminDashboard = React.lazy(() => import('./pages/Auth/AdminDashboard'));
 const Dashboard = React.lazy(() => import('./pages/Core/Dashboard'));
 const AlertCenter = React.lazy(() => import('./pages/Core/AlertCenter'));
+const NotificationDetail = React.lazy(() => import('./pages/Core/NotificationDetail'));
+const Settings = React.lazy(() => import('./pages/Core/Settings'));
 const SoilMonitor = React.lazy(() => import('./pages/Monitoring/SoilMonitor'));
+const SensorDetail = React.lazy(() => import('./pages/Monitoring/SensorDetail'));
 const WeatherMonitor = React.lazy(() => import('./pages/Monitoring/WeatherMonitor'));
 const VisualMonitor = React.lazy(() => import('./pages/Monitoring/VisualMonitor'));
 const DeviceManager = React.lazy(() => import('./pages/Control/DeviceManager'));
+const DeviceDetails = React.lazy(() => import('./pages/Control/DeviceDetails'));
+const MqttConfig = React.lazy(() => import('./pages/Control/MqttConfig'));
 const AnalyticsHub = React.lazy(() => import('./pages/Analytics/AnalyticsHub'));
 const Reports = React.lazy(() => import('./pages/Analytics/Reports'));
 const SoilForensics = React.lazy(() => import('./pages/Advisory/SoilForensics'));
 const FarmAdvisor = React.lazy(() => import('./pages/Advisory/FarmAdvisor'));
+const FertilizerEngine = React.lazy(() => import('./pages/Advisory/FertilizerEngine'));
+const PestCropAnalysis = React.lazy(() => import('./pages/Advisory/PestCropAnalysis'));
+const AIVision = React.lazy(() => import('./pages/Advisory/AIVision'));
+const ActuatorControl = React.lazy(() => import('./pages/Control/ActuatorControl'));
+const FarmSetup = React.lazy(() => import('./pages/Auth/FarmSetup'));
 
 
 // ─── LOADING SKELETON ──────────────────────────────────────────────────────
@@ -62,14 +72,42 @@ const BottomNav = React.memo(() => {
   const location = useLocation();
 
   const tabs = [
-    { id: 'Home', path: '/dashboard', icon: LayoutGrid, color: 'var(--primary)' },
-    { id: 'Soil', path: '/precision-soil-testing', icon: FlaskConical, color: 'var(--secondary)' },
-    { id: 'Advisor', path: '/crop-advisor', icon: Sparkles, color: 'var(--accent)' },
-    { id: 'Analytics', path: '/analytics', icon: LineChart, color: 'var(--primary)' },
-    { id: 'Devices', path: '/device-area', icon: Cpu, color: 'var(--secondary)' },
+    { 
+      id: 'Home', 
+      path: '/dashboard', 
+      icon: LayoutGrid, 
+      color: 'var(--primary)',
+      matches: ['/dashboard']
+    },
+    { 
+      id: 'Soil', 
+      path: '/soil-monitoring', 
+      icon: FlaskConical, 
+      color: 'var(--secondary)',
+      matches: ['/soil-monitoring', '/sensor-detail', '/precision-soil-testing']
+    },
+    { 
+      id: 'Advisor', 
+      path: '/fertilizer-engine', 
+      icon: Sparkles, 
+      color: 'var(--accent)',
+      matches: ['/fertilizer-engine', '/pest-analysis', '/crop-advisor', '/ai-vision', '/crop-vision', '/vision']
+    },
+    { 
+      id: 'Analytics', 
+      path: '/reports', 
+      icon: LineChart, 
+      color: 'var(--primary)',
+      matches: ['/reports', '/analytics', '/alerts', '/notification-detail']
+    },
+    { 
+      id: 'Devices', 
+      path: '/device-area', 
+      icon: Cpu, 
+      color: 'var(--secondary)',
+      matches: ['/device-area', '/device-detail', '/actuators', '/mqtt-config']
+    },
   ];
-
-  const activeIndex = tabs.findIndex(tab => tab.path === location.pathname);
 
   return (
     <nav className="bottom-nav" style={{
@@ -80,14 +118,13 @@ const BottomNav = React.memo(() => {
       alignItems: 'center', padding: '0 8px', zIndex: 1000,
       boxShadow: 'var(--shadow-lg)'
     }}>
-      {/* Tab Links */}
-
-      {tabs.map((item, index) => {
+      {tabs.map((item) => {
         const Icon = item.icon;
-        const isActive = location.pathname === item.path;
+        const isActive = item.matches.includes(location.pathname);
+
         return (
           <motion.button
-            key={item.path}
+            key={item.id}
             whileTap={{ scale: 0.9 }}
             onClick={() => navigate(item.path)}
             style={{
@@ -159,17 +196,29 @@ const MainLayout = ({ children }) => {
   const titles = {
     '/dashboard':              'Dashboard',
     '/soil-monitoring':        'Soil Monitor',
+    '/sensor-detail':          'Sensor Detail',
     '/weather':                'Weather Station',
     '/camera':                 'Camera View',
-    '/device-area':            'Device Management',
-    '/precision-soil-testing': 'Soil Test',
+    '/device-area':            'Device Manager',
+    '/device-detail':          'Device Details',
+    '/device-details':         'Device Details',
+    '/mqtt-config':            'IoT / MQTT Configuration',
+    '/actuators':              'Actuator Control',
+    '/precision-soil-testing': 'Soil Forensics',
     '/crop-advisor':           'Farm Advisor',
-    '/reports':                'Farm Report',
+    '/fertilizer-engine':      'Fertilizer Engine',
+    '/pest-analysis':          'AI Plant Vision',
+    '/ai-vision':              'AI Plant Vision',
+    '/crop-vision':            'AI Plant Vision',
+    '/vision':                 'AI Plant Vision',
+    '/farm-setup':             'Farm Setup',
+    '/reports':                'Farm Reports',
     '/analytics':              'Analytics Hub',
     '/account':                'My Account',
     '/alerts':                 'Alerts',
+    '/notification-detail':    'Alerts',
     '/profile':                'My Account',
-    '/settings':               'My Account',
+    '/settings':               'Settings',
     '/admin':                  'Admin Panel',
   };
 
@@ -228,24 +277,40 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div style={{ height: '100dvh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--bg-main)' }}>
+    <div style={{ 
+      height: '100dvh', 
+      width: '100vw', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      overflow: 'hidden', 
+      background: 'var(--bg-main)' 
+    }}>
       <TopBar title={titles[location.pathname] || 'AgriSense'} />
-      <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch', position: 'relative', paddingBottom: '120px' }}>
-        <div style={{ maxWidth: '500px', margin: '0 auto', width: '100%', height: '100%' }}>
-          <AnimatePresence mode="popLayout" custom={navDirection}>
+      <main 
+        ref={mainRef} 
+        style={{ 
+          flex: 1, 
+          overflowY: 'auto', 
+          overflowX: 'hidden', 
+          WebkitOverflowScrolling: 'touch', 
+          position: 'relative' 
+        }}
+      >
+        <div style={{ 
+          maxWidth: '480px', 
+          margin: '0 auto', 
+          width: '100%', 
+          boxSizing: 'border-box',
+          paddingBottom: '84px'
+        }}>
+          <AnimatePresence mode="wait">
             <motion.div 
               key={location.pathname}
-              custom={navDirection}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{
-                x: { type: "spring", stiffness: 260, damping: 28 },
-                opacity: { duration: 0.25, ease: "easeInOut" },
-                scale: { duration: 0.25, ease: "easeOut" }
-              }}
-              style={{ width: '100%', height: '100%', position: 'relative' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+              style={{ width: '100%', boxSizing: 'border-box' }}
             >
               {children}
             </motion.div>
@@ -281,8 +346,6 @@ const AppRoutes = () => {
   useEffect(() => {
     // ✋ LOADING GUARD: Wait for Cloud Sync to finish
     if (isDataLoading) return;
-
-    // 🚀 DIRECT ACCESS: No more forced onboarding.
   }, [user, isDataLoading, location.pathname, navigate]);
 
   useEffect(() => {
@@ -299,17 +362,14 @@ const AppRoutes = () => {
 
     const initListeners = async () => {
       try {
-        // 🛡️ RELEASE GUARD: Safety timeout to hide native splash if logic fails
         setTimeout(async () => {
           try {
             const { SplashScreen } = await import('@capacitor/splash-screen');
             await SplashScreen.hide();
           } catch (e) {}
-        }, 2000); // Reduced from 5000ms to 2000ms for snappier feel
-
+        }, 2000);
 
         if (CapApp) {
-          // 🔙 Back button handling
           backListener = await CapApp.addListener('backButton', () => {
             if (['/dashboard', '/login', '/'].includes(location.pathname)) {
               CapApp.exitApp();
@@ -331,18 +391,8 @@ const AppRoutes = () => {
     };
     initListeners();
 
-    // 🕵️ RELEASE DIAGNOSTICS: Capture production-only failures
-    const handleGlobalError = (event) => {
-      const errorLog = {
-        message: event.message,
-        source: event.filename,
-        line: event.lineno,
-        col: event.colno,
-        error: event.error?.stack,
-        time: new Date().toISOString()
-      };
+    const handleGlobalError = (errorLog) => {
       console.error("🚀 RELEASE_CRASH_DETECTED:", errorLog);
-      // Optional: Store in localStorage for audit
       try {
         const logs = JSON.parse(localStorage.getItem('agrisense_crash_logs') || '[]');
         logs.push(errorLog);
@@ -350,8 +400,8 @@ const AppRoutes = () => {
       } catch (e) {}
     };
 
-    window.addEventListener('error', handleGlobalError);
-    window.addEventListener('unhandledrejection', (e) => handleGlobalError({ message: e.reason?.message || 'Promise Rejection', error: e.reason }));
+    window.addEventListener('error', (event) => handleGlobalError({ message: event.message, source: event.filename, line: event.lineno, col: event.colno, error: event.error?.stack, time: new Date().toISOString() }));
+    window.addEventListener('unhandledrejection', (e) => handleGlobalError({ message: e.reason?.message || 'Promise Rejection', error: e.reason, time: new Date().toISOString() }));
 
     return () => {
       backListener?.remove();
@@ -360,33 +410,43 @@ const AppRoutes = () => {
     };
   }, [location.pathname, navigate]);
 
-
-  const isPublicRoute = ['/', '/login'].includes(location.pathname);
-
+  const isPublicRoute = ['/', '/login', '/farm-setup'].includes(location.pathname);
 
   return (
     <Routes>
       <Route path="/" element={<Splash />} />
       <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
+      <Route path="/farm-setup" element={<FarmSetup />} />
       
       {/* 🛠️ PERSISTENT LAYOUT WRAPPER: Prevents layout re-mounting on every navigation */}
       <Route element={<MainLayout><React.Suspense fallback={<PageLoader />}><Outlet /></React.Suspense></MainLayout>}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/analytics" element={<AnalyticsHub />} />
         <Route path="/soil-monitoring" element={<SoilMonitor />} />
+        <Route path="/sensor-detail" element={<SensorDetail />} />
         <Route path="/camera" element={<VisualMonitor />} />
         <Route path="/device-area" element={<DeviceManager />} />
+        <Route path="/device-detail" element={<DeviceDetails />} />
+        <Route path="/device-details" element={<DeviceDetails />} />
+        <Route path="/mqtt-config" element={<MqttConfig />} />
         <Route path="/alerts" element={<AlertCenter />} />
+        <Route path="/notification-detail" element={<AlertCenter />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/settings" element={<Settings />} />
         <Route path="/weather" element={<WeatherMonitor />} />
         <Route path="/precision-soil-testing" element={<SoilForensics />} />
         <Route path="/crop-advisor" element={<FarmAdvisor />} />
+        <Route path="/fertilizer-engine" element={<FertilizerEngine />} />
+        <Route path="/pest-analysis" element={<AIVision initialMode="pest" />} />
+        <Route path="/ai-vision" element={<AIVision />} />
+        <Route path="/crop-vision" element={<AIVision />} />
+        <Route path="/vision" element={<AIVision />} />
+        <Route path="/actuators" element={<ActuatorControl />} />
         <Route path="/admin" element={user?.email?.toLowerCase() === 'prolayjitbiswas14112004@gmail.com' ? <AdminDashboard /> : <Navigate to="/dashboard" />} />
       </Route>
 
       <Route path="/profile" element={<Navigate to="/account" />} />
-      <Route path="/settings" element={<Navigate to="/account" />} />
       <Route path="*" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
     </Routes>
   );

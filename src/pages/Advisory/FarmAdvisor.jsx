@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import {
   MapPin, Zap, Calculator, RefreshCw, Activity, Target, Plus, Minus,
@@ -168,6 +169,7 @@ const CropBottomSheet = ({ isOpen, onClose, crops, onSelect, selectedCrop }) => 
 // ─── MAIN COMPONENT ─────────────────────────────────────────────────────────
 
 const FarmAdvisor = () => {
+  const navigate = useNavigate();
   const { user, currentGPS } = useApp();
   const { sensorData } = useTelemetry();
   const [selectedCrop, setSelectedCrop] = useState('rice');
@@ -661,12 +663,14 @@ const FarmAdvisor = () => {
       className="no-scrollbar" 
       style={{ 
         background: 'var(--bg-main)', 
-        minHeight: '100dvh', 
-        paddingBottom: '140px',
+        minHeight: '100%', 
+        padding: '16px',
+        paddingBottom: '24px',
         fontFamily: "'Outfit', sans-serif", 
         overflowX: 'hidden',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        boxSizing: 'border-box'
       }}
     >
       {!isReady ? (
@@ -858,7 +862,17 @@ const FarmAdvisor = () => {
             </div>
 
             {/* 🧪 FERTILIZER ENGINE */}
-            <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, var(--bg-card) 100%)` }}>
+            <motion.div 
+              whileHover={{ scale: 1.01, translateY: -2 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => navigate('/fertilizer-engine')}
+              style={{ 
+                ...cardStyle, 
+                background: `linear-gradient(165deg, ${COLORS.secondary}08 0%, var(--bg-card) 100%)`,
+                cursor: 'pointer',
+                transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
+              }}
+            >
               <div style={{ 
                 position: 'absolute', top: 0, left: 0, right: 0, height: '100%', 
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%)', 
@@ -869,15 +883,27 @@ const FarmAdvisor = () => {
                   <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${COLORS.secondary}10`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Calculator size={20} color={COLORS.secondary} />
                   </div>
-                  <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Fertilizer Engine</h3>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 950, color: COLORS.textMain }}>Fertilizer Engine</h3>
+                    <div style={{ fontSize: '0.68rem', fontWeight: 700, color: COLORS.textMuted }}>AI Field Plan & Dosages</div>
+                  </div>
                 </div>
-                {/* Status badge removed for cleaner header */}
+                <div style={{ 
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  fontSize: '0.74rem', fontWeight: 850, color: COLORS.secondary,
+                  background: `${COLORS.secondary}15`, padding: '6px 12px', borderRadius: '20px',
+                  border: `1px solid ${COLORS.secondary}25`
+                }}>
+                  <span>Open Engine</span>
+                  <ChevronRight size={14} />
+                </div>
               </div>
 
               {!brain.fertilizer.isValid ? (
                 <div style={{ padding: '30px 20px', textAlign: 'center', background: 'var(--bg-card)', borderRadius: '20px', border: `1px dashed var(--border-main)` }}>
                   <RefreshCw size={24} color={COLORS.textMuted} style={{ marginBottom: '10px', opacity: 0.5 }} />
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted }}>NPK Sensors Offline</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: COLORS.textMuted, marginBottom: '8px' }}>NPK Sensors Offline</div>
+                  <div style={{ fontSize: '0.72rem', color: COLORS.secondary, fontWeight: 700 }}>Tap to open manual calculator & presets →</div>
                 </div>
               ) : (
                 <>
@@ -919,9 +945,22 @@ const FarmAdvisor = () => {
                        </div>
                     </div>
                   </div>
+
+                  {/* BOTTOM CTA LINK */}
+                  <div style={{ 
+                    marginTop: '16px', paddingTop: '12px', borderTop: '1px solid var(--border-main)', 
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center' 
+                  }}>
+                    <span style={{ fontSize: '0.72rem', color: COLORS.textMuted, fontWeight: 700 }}>
+                      AI Custom Split & Application Schedule
+                    </span>
+                    <span style={{ fontSize: '0.76rem', fontWeight: 900, color: COLORS.secondary, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      Detailed Engine <ChevronRight size={13} />
+                    </span>
+                  </div>
                 </>
               )}
-            </div>
+            </motion.div>
 
             {/* 🌿 COMPOST ENGINE */}
             <div style={{ ...cardStyle, background: `linear-gradient(165deg, ${COLORS.primary}08 0%, var(--bg-card) 100%)` }}>

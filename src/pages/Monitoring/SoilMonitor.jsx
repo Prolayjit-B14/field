@@ -28,7 +28,8 @@ const itemFadeUp = {
 
 // ─── DIAGNOSTIC CARD ────────────────────────────────────────────────────────
 
-const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo }) => {
+const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, trendInfo, sensorId }) => {
+  const navigate = useNavigate();
   const isOffline = value === null || value === undefined;
   const systemColor = isOffline ? 'var(--text-inactive)' : color;
 
@@ -52,7 +53,9 @@ const DiagnosticCard = ({ label, value, min, max, icon: Icon, color, range, tren
     <motion.div
       variants={itemFadeUp}
       whileTap={{ scale: 0.97 }}
+      onClick={() => navigate('/sensor-detail', { state: { sensorId, from: '/soil-monitoring' } })}
       style={{
+        cursor: 'pointer',
         borderRadius: 'var(--radius-xl)',
         background: 'var(--bg-card)',
         border: '1px solid ' + (isOffline ? 'var(--glass-stroke)' : systemColor + '30'),
@@ -170,7 +173,7 @@ const SoilMonitoring = () => {
       variants={staggerContainer}
       initial="hidden"
       animate="visible"
-      style={{ padding: '1.25rem', paddingBottom: '140px' }}
+      style={{ padding: '16px', paddingBottom: '24px' }}
     >
       {/* Cinematic Hero */}
       <motion.div
@@ -260,12 +263,12 @@ const SoilMonitoring = () => {
 
       {/* 6-Card Sensor Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-        <DiagnosticCard label="Moisture"       value={stats.moisture} min={30}  max={60}  icon={Sprout}       color="#8B5E3C" range="30-60 %"  trendInfo={trend.moisture} />
-        <DiagnosticCard label="Temperature"    value={stats.temp}     min={18}  max={32}  icon={Thermometer}  color="#FF6B35" range="18-32 °C" trendInfo={trend.temperature} />
-        <DiagnosticCard label="Soil pH"        value={stats.ph}       min={6.0} max={7.5} icon={Activity}     color="#14B8A6" range="6.0-7.5"  trendInfo={trend.ph} />
-        <DiagnosticCard label="Nitrogen (N)"   value={stats.n}        min={40}  max={60}  icon={FlaskConical} color="#22C55E" range="40-60 mg" trendInfo={trend.npk} />
-        <DiagnosticCard label="Phosphorus (P)" value={stats.p}        min={20}  max={40}  icon={Beaker}       color="#A855F7" range="20-40 mg" trendInfo={trend.npk} />
-        <DiagnosticCard label="Potassium (K)"  value={stats.k}        min={30}  max={50}  icon={Hexagon}      color="#FACC15" range="30-50 mg" trendInfo={trend.npk} />
+        <DiagnosticCard sensorId="moisture" label="Moisture"       value={stats.moisture} min={30}  max={60}  icon={Sprout}       color="#8B5E3C" range="30-60 %"  trendInfo={trend.moisture} />
+        <DiagnosticCard sensorId="temp"     label="Temperature"    value={stats.temp}     min={18}  max={32}  icon={Thermometer}  color="#FF6B35" range="18-32 °C" trendInfo={trend.temperature} />
+        <DiagnosticCard sensorId="ph"       label="Soil pH"        value={stats.ph}       min={6.0} max={7.5} icon={Activity}     color="#14B8A6" range="6.0-7.5"  trendInfo={trend.ph} />
+        <DiagnosticCard sensorId="n"        label="Nitrogen (N)"   value={stats.n}        min={40}  max={60}  icon={FlaskConical} color="#22C55E" range="40-60 mg" trendInfo={trend.npk} />
+        <DiagnosticCard sensorId="p"        label="Phosphorus (P)" value={stats.p}        min={20}  max={40}  icon={Beaker}       color="#A855F7" range="20-40 mg" trendInfo={trend.npk} />
+        <DiagnosticCard sensorId="k"        label="Potassium (K)"  value={stats.k}        min={30}  max={50}  icon={Hexagon}      color="#FACC15" range="30-50 mg" trendInfo={trend.npk} />
       </div>
 
 

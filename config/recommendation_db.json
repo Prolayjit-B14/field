@@ -1,0 +1,205 @@
+{
+  "version": "1.0.0",
+  "notes": "Verified agricultural knowledge base. Recommendations are only triggered when model confidence >= threshold. Do NOT allow the neural network to generate treatment text.",
+  "regulatory_notice": "All pesticide/fungicide recommendations are general guidelines only. Consult local agricultural extension services for approved products and dosages in your region.",
+
+  "healthy": {
+    "display_name": "Healthy Leaf",
+    "message": "The leaf appears healthy. Continue regular monitoring.",
+    "control": [],
+    "prevention": ["Regular field scouting", "Maintain optimal plant spacing for air circulation", "Follow balanced fertilization schedule"]
+  },
+
+  "tomato_early_blight": {
+    "scientific_name": "Alternaria solani",
+    "crop": "tomato",
+    "display_name": "Early Blight",
+    "symptoms": "Circular brown lesions with concentric rings, often starting on older lower leaves. Lesions may have yellow halo.",
+    "control": [
+      "Remove and destroy severely infected leaves immediately",
+      "Improve air circulation between plants",
+      "Apply locally approved copper-based fungicide according to label",
+      "Avoid overhead irrigation — water at base of plants"
+    ],
+    "prevention": [
+      "Use certified disease-free seeds or resistant varieties",
+      "Practice 2–3 year crop rotation",
+      "Maintain soil mulch to reduce soil-splash infection",
+      "Avoid working in the field when foliage is wet"
+    ],
+    "regulatory_note": "Consult local agriculture extension office for registered fungicides in your region."
+  },
+
+  "tomato_late_blight": {
+    "scientific_name": "Phytophthora infestans",
+    "crop": "tomato",
+    "display_name": "Late Blight",
+    "symptoms": "Irregular water-soaked lesions on leaves that turn brown/black. White sporulation on underside of leaves in humid conditions.",
+    "control": [
+      "Remove and destroy infected plant material immediately",
+      "Do not compost infected material",
+      "Apply protective fungicide before symptoms appear in high-risk conditions",
+      "Consult local recommendations for mancozeb or copper-based protectants"
+    ],
+    "prevention": [
+      "Plant resistant varieties",
+      "Avoid cool wet conditions (above 90% humidity with 10–15°C)",
+      "Improve drainage and air circulation",
+      "Monitor field regularly during rainy seasons"
+    ],
+    "regulatory_note": "Late blight spreads rapidly. Seek professional field diagnosis to confirm before applying systemic fungicides."
+  },
+
+  "tomato_leaf_mold": {
+    "scientific_name": "Passalora fulva",
+    "crop": "tomato",
+    "display_name": "Tomato Leaf Mold",
+    "symptoms": "Yellow patches on upper leaf surface with olive-green to gray mold growth on underside.",
+    "control": [
+      "Remove affected leaves",
+      "Improve greenhouse ventilation if growing under cover",
+      "Apply locally registered fungicide for leaf mold"
+    ],
+    "prevention": [
+      "Reduce humidity below 85%",
+      "Use resistant tomato varieties",
+      "Avoid excessive nitrogen fertilization"
+    ],
+    "regulatory_note": "Primarily affects greenhouse tomatoes. Consult extension services for field management."
+  },
+
+  "tomato_septoria_leaf_spot": {
+    "scientific_name": "Septoria lycopersici",
+    "crop": "tomato",
+    "display_name": "Septoria Leaf Spot",
+    "symptoms": "Small circular spots with dark border and lighter center. Tiny black fruiting bodies visible inside spots.",
+    "control": [
+      "Remove infected leaves promptly",
+      "Avoid working in wet field conditions",
+      "Apply copper or chlorothalonil fungicide (where registered)"
+    ],
+    "prevention": [
+      "Crop rotation of 2–3 years",
+      "Mulch soil to prevent splash",
+      "Avoid overhead watering"
+    ],
+    "regulatory_note": "Check local regulations before applying synthetic fungicides."
+  },
+
+  "tomato_target_spot": {
+    "scientific_name": "Corynespora cassiicola",
+    "crop": "tomato",
+    "display_name": "Target Spot",
+    "symptoms": "Concentric ring pattern forming target-like spots. Brown lesions on leaves, stems, and fruit.",
+    "control": [
+      "Apply registered fungicide at first sign of disease",
+      "Remove and destroy infected plant debris"
+    ],
+    "prevention": ["Crop rotation", "Use resistant varieties where available", "Improve air circulation"]
+  },
+
+  "tomato_mosaic_virus": {
+    "scientific_name": "Tomato Mosaic Virus (ToMV)",
+    "crop": "tomato",
+    "display_name": "Tomato Mosaic Virus",
+    "symptoms": "Mosaic pattern of light and dark green patches on leaves. Leaf distortion, curling, and stunted growth.",
+    "control": [
+      "No chemical cure for viral diseases",
+      "Remove and destroy infected plants",
+      "Control aphid and whitefly vectors",
+      "Disinfect tools between plants"
+    ],
+    "prevention": [
+      "Use virus-indexed seeds or certified transplants",
+      "Control insect vectors",
+      "Wash hands thoroughly before handling plants",
+      "Do not smoke near tomato plants (tobacco mosaic risk)"
+    ],
+    "regulatory_note": "Viral diseases cannot be treated chemically. Focus on prevention and vector control."
+  },
+
+  "rice_brown_spot": {
+    "scientific_name": "Helminthosporium oryzae",
+    "crop": "rice",
+    "display_name": "Brown Spot",
+    "symptoms": "Oval to circular brown lesions with yellow halo. Severe infection causes premature leaf death.",
+    "control": [
+      "Apply fungicide at early infection stage (consult local recommendations)",
+      "Ensure balanced silicon and potassium nutrition"
+    ],
+    "prevention": [
+      "Use certified disease-free seeds",
+      "Treat seeds before planting",
+      "Maintain optimal soil nutrition — brown spot is often linked to nutrient stress"
+    ],
+    "regulatory_note": "Linked to nutrient deficiency. Soil testing recommended before treatment."
+  },
+
+  "rice_leaf_blast": {
+    "scientific_name": "Magnaporthe oryzae",
+    "crop": "rice",
+    "display_name": "Rice Leaf Blast",
+    "symptoms": "Diamond-shaped lesions with gray-white center and brown border. Severe cases lead to leaf death.",
+    "control": [
+      "Apply locally approved fungicide at early tillering and heading stages",
+      "Avoid excessive nitrogen application"
+    ],
+    "prevention": [
+      "Use blast-resistant varieties",
+      "Avoid high-nitrogen fertilization",
+      "Monitor weather conditions — blast is favored by cool wet nights"
+    ],
+    "regulatory_note": "Tricyclazole and propiconazole are commonly used where registered — check local approvals."
+  },
+
+  "powdery_mildew": {
+    "scientific_name": "Various Erysiphales spp.",
+    "crop": "general",
+    "display_name": "Powdery Mildew",
+    "symptoms": "White powdery coating on leaf surface. Leaves may curl and distort under heavy infection.",
+    "control": [
+      "Apply sulfur-based or registered fungicide",
+      "Remove heavily infected leaves"
+    ],
+    "prevention": [
+      "Improve air circulation",
+      "Avoid excessive nitrogen",
+      "Use resistant varieties"
+    ]
+  },
+
+  "pest_damage_unspecified": {
+    "display_name": "Pest Damage Detected",
+    "message": "Signs of pest activity are visible but the specific pest cannot be reliably identified from this image.",
+    "control": [
+      "Inspect the leaf underside carefully for insects, eggs, or webbing",
+      "Capture a close-up image of visible insects for identification",
+      "Consult local agricultural extension for pest identification before treatment"
+    ],
+    "prevention": ["Regular scouting", "Monitor for early signs of pest activity"]
+  },
+
+  "physical_damage_unspecified": {
+    "display_name": "Physical Damage Detected",
+    "message": "Mechanical or physical damage to leaf tissue is visible.",
+    "control": [
+      "Monitor for secondary fungal infection at damaged sites",
+      "Remove severely damaged leaves to reduce infection risk"
+    ],
+    "prevention": ["Handle plants carefully during field operations"]
+  },
+
+  "unknown": {
+    "display_name": "Condition Unknown",
+    "message": "The leaf condition could not be reliably identified from this image.",
+    "control": [],
+    "prevention": [],
+    "guidance": "Please capture a closer, well-lit image of the affected leaf, or consult a local agricultural expert for in-person diagnosis."
+  },
+
+  "low_confidence": {
+    "display_name": "Low Confidence",
+    "message": "Analysis confidence is insufficient for a reliable diagnosis.",
+    "guidance": "Please capture a clearer image in good lighting with the leaf filling most of the frame. If the issue persists, consult an agricultural expert."
+  }
+}

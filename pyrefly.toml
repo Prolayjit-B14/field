@@ -1,0 +1,43 @@
+# Pyrefly type-checker configuration
+# https://pyrefly.io/en/stable/configuration/
+
+preset = "basic"
+
+search-path = [
+  ".",
+  "ml",
+]
+
+disable-search-path-heuristics = true
+
+project-excludes = [
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/build/**",
+  "src/**",
+  "android/**",
+]
+
+replace-imports-with-any = [
+  "cv2",
+  "numpy",
+  "onnxruntime",
+  "torch",
+  "torchvision",
+  "PIL",
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+]
+
+permissive-ignores = true
+
+[errors]
+missing-import = "ignore"
+missing-attribute = "ignore"
+bad-argument-type = "ignore"
+unsupported-operation = "ignore"
+bad-assignment = "ignore"
+bad-function-definition = "ignore"
+unbound-name = "ignore"
+unnecessary-type-conversion = "ignore"
